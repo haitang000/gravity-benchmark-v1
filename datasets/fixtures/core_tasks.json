@@ -226,9 +226,9 @@
     "language": "en",
     "difficulty": "easy",
     "skill": "arithmetic",
-    "prompt": "A box has 7 red and 5 blue balls. How many balls are in the box? Give only the final number.",
+    "prompt": "A store has 43 blue pens and 27 red pens. If 18 pens are sold, how many pens remain? Give only the number.",
     "expected": {
-      "answer": "12",
+      "answer": "52",
       "topic": "arithmetic"
     }
   },
@@ -238,9 +238,9 @@
     "language": "zh",
     "difficulty": "easy",
     "skill": "percentage",
-    "prompt": "一本书原价 80 元，打九折后价格是多少？只给出最终数字。",
+    "prompt": "一件商品标价 150 元，先打八折，再立减 15 元。最终售价是多少元？只输出数字。",
     "expected": {
-      "answer": "72",
+      "answer": "105",
       "topic": "percentage"
     }
   },
@@ -250,9 +250,9 @@
     "language": "en",
     "difficulty": "easy",
     "skill": "algebra",
-    "prompt": "Solve for x: 3x + 5 = 20. Give only the final number.",
+    "prompt": "Solve for x: 4x - 13 = 19. Give only the final number.",
     "expected": {
-      "answer": "5",
+      "answer": "8",
       "topic": "algebra"
     }
   },
@@ -262,9 +262,9 @@
     "language": "zh",
     "difficulty": "easy",
     "skill": "geometry",
-    "prompt": "一个长方形长 8、宽 3，面积是多少？只给最终数字。",
+    "prompt": "一个长方形周长为 26，宽为 5，它的面积是多少？只给最终数字。",
     "expected": {
-      "answer": "24",
+      "answer": "40",
       "topic": "geometry"
     }
   },
@@ -273,9 +273,9 @@
     "category": "math",
     "language": "en",
     "skill": "average",
-    "prompt": "The average of 4, 6, and 8 is what? Give only the number.",
+    "prompt": "The average of five numbers is 14. Four of the numbers are 10, 12, 16, and 18. What is the fifth number? Give only the number.",
     "expected": {
-      "answer": "6",
+      "answer": "14",
       "topic": "average"
     },
     "difficulty": "easy"
@@ -286,9 +286,9 @@
     "language": "zh",
     "difficulty": "easy",
     "skill": "ratio",
-    "prompt": "红球和蓝球数量比是 2:3，红球有 8 个，蓝球有多少个？只给数字。",
+    "prompt": "甲乙两人的资金比是 3:5，两人共有资金 72 万元。乙比甲多多少万元？只输出数字。",
     "expected": {
-      "answer": "12",
+      "answer": "18",
       "topic": "ratio"
     }
   },
@@ -298,9 +298,9 @@
     "language": "en",
     "difficulty": "easy",
     "skill": "word_problem",
-    "prompt": "A train travels 60 kilometers per hour for 2 hours. How far does it travel? Give only the number.",
+    "prompt": "A cyclist rides at 18 km/h for 40 minutes. How many kilometers does the cyclist travel? Give only the number.",
     "expected": {
-      "answer": "120",
+      "answer": "12",
       "topic": "rate"
     }
   },
@@ -310,9 +310,9 @@
     "language": "zh",
     "difficulty": "medium",
     "skill": "probability",
-    "prompt": "一个公平六面骰子掷出偶数的概率是多少？用最简分数表示。",
+    "prompt": "同时掷两枚均匀的六面骰子，点数之和等于 7 的概率是多少？用最简分数表示。",
     "expected": {
-      "answer": "1/2",
+      "answer": "1/6",
       "topic": "probability"
     }
   },
@@ -322,9 +322,9 @@
     "language": "en",
     "difficulty": "medium",
     "skill": "algebra",
-    "prompt": "If 2x - 7 = 9, what is x? Give only the final number.",
+    "prompt": "Solve for x: 5x - 17 = 2x + 16. Give only the final number.",
     "expected": {
-      "answer": "8",
+      "answer": "11",
       "topic": "algebra"
     }
   },
@@ -334,9 +334,9 @@
     "language": "zh",
     "difficulty": "medium",
     "skill": "sequence",
-    "prompt": "数列 3、6、9、12 的下一个数是多少？只给数字。",
+    "prompt": "数列 2、6、12、20、30 遵循同一规律，下一个数是多少？只给数字。",
     "expected": {
-      "answer": "15",
+      "answer": "42",
       "topic": "sequence"
     }
   },
@@ -346,9 +346,9 @@
     "language": "en",
     "difficulty": "medium",
     "skill": "percentage",
-    "prompt": "A $50 item is discounted by 20%. What is the sale price? Give only the number.",
+    "prompt": "An item costs $80. The price increases by 25%, and then decreases by 10%. What is the final price in dollars? Give only the number.",
     "expected": {
-      "answer": "40",
+      "answer": "90",
       "topic": "percentage"
     }
   },
@@ -358,9 +358,9 @@
     "language": "zh",
     "difficulty": "medium",
     "skill": "system",
-    "prompt": "两个数的和是 18，差是 4，较大的数是多少？只给数字。",
+    "prompt": "鸡兔同笼，共有头 15 个，脚 40 只。兔有多少只？只给数字。",
     "expected": {
-      "answer": "11",
+      "answer": "5",
       "topic": "algebra"
     }
   },
@@ -370,10 +370,10 @@
     "language": "en",
     "difficulty": "easy",
     "skill": "function",
-    "prompt": "Write only Python code for def add(a, b): that returns the sum of a and b.",
+    "prompt": "Write only Python code for def clamp(val, low, high): that returns low if val < low, high if val > high, and val otherwise.",
     "expected": {
-      "entry": "add",
-      "tests": "assert add(2, 3) == 5\nassert add(-1, 1) == 0"
+      "entry": "clamp",
+      "tests": "assert clamp(5, 1, 10) == 5\nassert clamp(-3, 0, 10) == 0\nassert clamp(15, 0, 10) == 10\nassert clamp(0, 0, 0) == 0"
     }
   },
   {
@@ -382,10 +382,10 @@
     "language": "zh",
     "difficulty": "easy",
     "skill": "boolean",
-    "prompt": "只输出 Python 代码：实现函数 is_even(n)，n 为偶数时返回 True，否则返回 False。",
+    "prompt": "只输出 Python 代码：实现函数 is_positive_even(n)，当 n 为正偶数时返回 True，否则（包含负偶数、0或奇数）返回 False。",
     "expected": {
-      "entry": "is_even",
-      "tests": "assert is_even(4) is True\nassert is_even(3) is False"
+      "entry": "is_positive_even",
+      "tests": "assert is_positive_even(4) is True\nassert is_positive_even(-4) is False\nassert is_positive_even(0) is False\nassert is_positive_even(3) is False"
     }
   },
   {
@@ -406,10 +406,10 @@
     "language": "zh",
     "difficulty": "easy",
     "skill": "list",
-    "prompt": "只输出 Python 代码：实现函数 first_item(items)，返回列表第一个元素；空列表返回 None。",
+    "prompt": "只输出 Python 代码：实现函数 last_or_default(items, default)，返回列表最后一个元素；若列表为空则返回 default。",
     "expected": {
-      "entry": "first_item",
-      "tests": "assert first_item([4, 5]) == 4\nassert first_item([]) is None"
+      "entry": "last_or_default",
+      "tests": "assert last_or_default([1, 2, 3], 0) == 3\nassert last_or_default([], -1) == -1\nassert last_or_default([9], None) == 9"
     }
   },
   {
@@ -514,12 +514,9 @@
     "language": "en",
     "difficulty": "easy",
     "skill": "short_output",
-    "prompt": "State the word gravity exactly once.",
+    "prompt": "Output exactly: PING:OK without extra spaces or lines.",
     "expected": {
-      "contains": [
-        "gravity"
-      ],
-      "max_chars": 20
+      "regex": "^PING:OK$"
     }
   },
   {
@@ -528,9 +525,500 @@
     "language": "zh",
     "difficulty": "easy",
     "skill": "short_output",
-    "prompt": "只输出两个字：重力。",
+    "prompt": "只输出这四个汉字：系统就绪。",
     "expected": {
-      "regex": "^重力$"
+      "regex": "^系统就绪$"
+    }
+  },
+  {
+    "id": "inst-zh-med-filter-list",
+    "category": "instruction",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "filtering",
+    "prompt": "从列表 [苹果, 香蕉, 橘子, 葡萄, 梨] 中选出所有双字水果名称，按原顺序输出，每行一个。不要输出其他内容。",
+    "expected": {
+      "exact_lines": [
+        "苹果",
+        "香蕉",
+        "橘子",
+        "葡萄"
+      ]
+    }
+  },
+  {
+    "id": "inst-en-med-filter-list",
+    "category": "instruction",
+    "language": "en",
+    "difficulty": "medium",
+    "skill": "filtering",
+    "prompt": "From the list [cat, elephant, dog, tiger, bear], select all animals with names of 4 letters or fewer. Output one per line in original order. No extra text.",
+    "expected": {
+      "exact_lines": [
+        "cat",
+        "dog",
+        "bear"
+      ]
+    }
+  },
+  {
+    "id": "inst-zh-med-json-kv",
+    "category": "instruction",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "json_schema",
+    "prompt": "只输出 JSON：包含 status（布尔值 true）、code（整数 200）和 message（字符串 'success'）三个字段。不得使用 markdown 代码块。",
+    "expected": {
+      "json_schema": {
+        "type": "object",
+        "properties": {
+          "status": "boolean",
+          "code": "integer",
+          "message": "string"
+        }
+      }
+    }
+  },
+  {
+    "id": "inst-en-med-json-kv",
+    "category": "instruction",
+    "language": "en",
+    "difficulty": "medium",
+    "skill": "json_schema",
+    "prompt": "Output only JSON: include fields active (boolean false), level (integer 5), and label (string 'guest'). Do not use markdown fences.",
+    "expected": {
+      "json_schema": {
+        "type": "object",
+        "properties": {
+          "active": "boolean",
+          "level": "integer",
+          "label": "string"
+        }
+      }
+    }
+  },
+  {
+    "id": "inst-zh-med-three-constraints",
+    "category": "instruction",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "multi_constraint",
+    "prompt": "只输出一行中文，必须同时满足：1. 包含“安全”和“可靠”；2. 字符数不超过 15 个字；3. 绝对不得包含逗号或感叹号。",
+    "expected": {
+      "line_count": 1,
+      "contains": [
+        "安全",
+        "可靠"
+      ],
+      "max_chars": 15,
+      "forbid": [
+        ",",
+        "，",
+        "!",
+        "！"
+      ]
+    }
+  },
+  {
+    "id": "inst-en-med-three-constraints",
+    "category": "instruction",
+    "language": "en",
+    "difficulty": "medium",
+    "skill": "multi_constraint",
+    "prompt": "Output exactly one sentence. It must contain 'speed' and 'accuracy', must be at most 10 words, and must NOT contain any commas.",
+    "expected": {
+      "line_count": 1,
+      "contains": [
+        "speed",
+        "accuracy"
+      ],
+      "forbid": [
+        ","
+      ],
+      "max_chars": 70
+    }
+  },
+  {
+    "id": "inst-zh-med-json-summary",
+    "category": "instruction",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "json_schema",
+    "prompt": "根据以下信息输出一个 JSON 对象：“服务器 srv-01 状态在线，CPU使用率 45%，内存占用 68%”。字段必须包含 host（字符串）、status（字符串）、cpu（整数 45）、mem（整数 68）。仅输出 JSON，不要任何其他文字。",
+    "expected": {
+      "json_schema": {
+        "type": "object",
+        "properties": {
+          "host": "string",
+          "status": "string",
+          "cpu": "integer",
+          "mem": "integer"
+        }
+      },
+      "contains": [
+        "srv-01",
+        "45",
+        "68"
+      ]
+    }
+  },
+  {
+    "id": "inst-en-med-json-summary",
+    "category": "instruction",
+    "language": "en",
+    "difficulty": "medium",
+    "skill": "json_schema",
+    "prompt": "From the report: 'Node worker-2 status active, cpu 52 percent, ram 74 percent', return only JSON with fields node (string), status (string), cpu (integer 52), and ram (integer 74). Do not include markdown fences.",
+    "expected": {
+      "json_schema": {
+        "type": "object",
+        "properties": {
+          "node": "string",
+          "status": "string",
+          "cpu": "integer",
+          "ram": "integer"
+        }
+      },
+      "contains": [
+        "worker-2",
+        "52",
+        "74"
+      ]
+    }
+  },
+  {
+    "id": "inst-zh-med-prefix-pair",
+    "category": "instruction",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "multi_constraint",
+    "prompt": "只输出两行中文。第一行以“【提议】”开头，第二行以“【风险】”开头。两行都必须包含词语“评估”，且全文不得出现问号。",
+    "expected": {
+      "line_count": 2,
+      "line_prefixes": [
+        "【提议】",
+        "【风险】"
+      ],
+      "contains": [
+        "评估"
+      ],
+      "forbid": [
+        "?",
+        "？"
+      ]
+    }
+  },
+  {
+    "id": "inst-en-med-prefix-pair",
+    "category": "instruction",
+    "language": "en",
+    "difficulty": "medium",
+    "skill": "multi_constraint",
+    "prompt": "Output exactly two lines. Line 1 must start with 'ACTION:' and line 2 must start with 'REASON:'. Both lines must contain the word 'verify', with no question marks.",
+    "expected": {
+      "line_count": 2,
+      "line_prefixes": [
+        "ACTION:",
+        "REASON:"
+      ],
+      "contains": [
+        "verify"
+      ],
+      "forbid": [
+        "?"
+      ]
+    }
+  },
+  {
+    "id": "math-zh-med-fraction-add",
+    "category": "math",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "fraction",
+    "prompt": "计算 1/4 + 2/5 的结果。用最简分数表示。只输出最终分数。",
+    "expected": {
+      "answer": "13/20",
+      "topic": "fraction"
+    }
+  },
+  {
+    "id": "math-en-med-fraction-add",
+    "category": "math",
+    "language": "en",
+    "difficulty": "medium",
+    "skill": "fraction",
+    "prompt": "Compute 1/3 + 3/8. Give the answer as a simplified fraction. Output only the fraction.",
+    "expected": {
+      "answer": "17/24",
+      "topic": "fraction"
+    }
+  },
+  {
+    "id": "math-zh-med-work-rate",
+    "category": "math",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "work_rate",
+    "prompt": "一项工程，甲单独做需要 6 天完成，乙单独做需要 12 天完成。两人合作需要多少天完成？只输出数字。",
+    "expected": {
+      "answer": "4",
+      "topic": "rate"
+    }
+  },
+  {
+    "id": "math-en-med-work-rate",
+    "category": "math",
+    "language": "en",
+    "difficulty": "medium",
+    "skill": "work_rate",
+    "prompt": "Pipe A fills a tank in 4 hours, and Pipe B fills it in 12 hours. How many hours will it take to fill the tank if both pipes are open together? Give only the number.",
+    "expected": {
+      "answer": "3",
+      "topic": "rate"
+    }
+  },
+  {
+    "id": "math-zh-med-modulo-cycle",
+    "category": "math",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "modulo",
+    "prompt": "今天是星期一，再过 100 天是星期几？只输出一个阿拉伯数字（星期一用 1 表示，星期日用 7 表示）。",
+    "expected": {
+      "answer": "3",
+      "topic": "modulo"
+    }
+  },
+  {
+    "id": "math-en-med-modulo-cycle",
+    "category": "math",
+    "language": "en",
+    "difficulty": "medium",
+    "skill": "modulo",
+    "prompt": "If today is Tuesday (day 2 of 7), what day of the week will it be 80 days from now? Give only the single digit where Monday is 1 and Sunday is 7.",
+    "expected": {
+      "answer": "5",
+      "topic": "modulo"
+    }
+  },
+  {
+    "id": "math-zh-med-circle-area",
+    "category": "math",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "geometry",
+    "prompt": "一个圆的半径为 7，取 π = 22/7，该圆的面积是多少？只输出最终数字。",
+    "expected": {
+      "answer": "154",
+      "topic": "geometry"
+    }
+  },
+  {
+    "id": "math-en-med-circle-area",
+    "category": "math",
+    "language": "en",
+    "difficulty": "medium",
+    "skill": "geometry",
+    "prompt": "A circle has radius 14. Using pi = 22/7, what is the area of the circle? Output only the number.",
+    "expected": {
+      "answer": "616",
+      "topic": "geometry"
+    }
+  },
+  {
+    "id": "math-zh-med-compound-ratio",
+    "category": "math",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "ratio",
+    "prompt": "甲班与乙班人数比是 4:5，乙班与丙班人数比是 3:2。如果丙班有 30 人，甲班有多少人？只输出数字。",
+    "expected": {
+      "answer": "36",
+      "topic": "ratio"
+    }
+  },
+  {
+    "id": "math-en-med-compound-ratio",
+    "category": "math",
+    "language": "en",
+    "difficulty": "medium",
+    "skill": "ratio",
+    "prompt": "The ratio of apples to oranges is 3:4, and the ratio of oranges to bananas is 2:5. If there are 30 bananas, how many apples are there? Give only the number.",
+    "expected": {
+      "answer": "9",
+      "topic": "ratio"
+    }
+  },
+  {
+    "id": "math-zh-med-leap-year-days",
+    "category": "math",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "calendar",
+    "prompt": "从 2024 年 2 月 1 日到 2024 年 3 月 1 日（包含首尾两日），一共有多少天？只输出纯数字。",
+    "expected": {
+      "answer": "30",
+      "topic": "calendar"
+    }
+  },
+  {
+    "id": "math-en-med-leap-year-days",
+    "category": "math",
+    "language": "en",
+    "difficulty": "medium",
+    "skill": "calendar",
+    "prompt": "How many total days are there from February 20, 2024 to March 5, 2024 inclusive? Output only the number.",
+    "expected": {
+      "answer": "15",
+      "topic": "calendar"
+    }
+  },
+  {
+    "id": "code-zh-med-remove-zeros",
+    "category": "coding",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "array",
+    "prompt": "只输出 Python 代码：实现函数 move_zeros_to_end(nums: list[int]) -> list[int]，返回新列表，将所有 0 移到末尾，保持非零元素的原始相对顺序。禁止就地修改原列表。",
+    "expected": {
+      "entry": "move_zeros_to_end",
+      "tests": "assert move_zeros_to_end([0, 1, 0, 3, 12]) == [1, 3, 12, 0, 0]\nassert move_zeros_to_end([0, 0]) == [0, 0]\nassert move_zeros_to_end([1, 2, 3]) == [1, 2, 3]\nassert move_zeros_to_end([]) == []"
+    }
+  },
+  {
+    "id": "code-en-med-remove-zeros",
+    "category": "coding",
+    "language": "en",
+    "difficulty": "medium",
+    "skill": "array",
+    "prompt": "Output only Python code: Implement move_zeros_to_end(nums: list[int]) -> list[int]. Return a new list with all zeros moved to the end while maintaining the relative order of non-zero elements. Do not mutate the input list.",
+    "expected": {
+      "entry": "move_zeros_to_end",
+      "tests": "assert move_zeros_to_end([0, 1, 0, 3, 12]) == [1, 3, 12, 0, 0]\nassert move_zeros_to_end([0, 0]) == [0, 0]\nassert move_zeros_to_end([1, 2, 3]) == [1, 2, 3]\nassert move_zeros_to_end([]) == []"
+    }
+  },
+  {
+    "id": "code-zh-med-balanced-parens",
+    "category": "coding",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "stack",
+    "prompt": "只输出 Python 代码：实现函数 is_balanced(s: str) -> bool，判断字符串中仅包含的圆括号 '()' 是否正确匹配且闭合。空字符串返回 True。",
+    "expected": {
+      "entry": "is_balanced",
+      "tests": "assert is_balanced('(())') is True\nassert is_balanced('()()') is True\nassert is_balanced(')(') is False\nassert is_balanced('(()') is False\nassert is_balanced('') is True"
+    }
+  },
+  {
+    "id": "code-en-med-balanced-parens",
+    "category": "coding",
+    "language": "en",
+    "difficulty": "medium",
+    "skill": "stack",
+    "prompt": "Output only Python code: Implement is_balanced(s: str) -> bool checking whether parentheses '()' in the string are valid and balanced. Empty string returns True.",
+    "expected": {
+      "entry": "is_balanced",
+      "tests": "assert is_balanced('(())') is True\nassert is_balanced('()()') is True\nassert is_balanced(')(') is False\nassert is_balanced('(()') is False\nassert is_balanced('') is True"
+    }
+  },
+  {
+    "id": "code-zh-med-second-largest",
+    "category": "coding",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "algorithm",
+    "prompt": "只输出 Python 代码：实现函数 second_largest(nums: list[int]) -> int | None，返回列表中第二大的唯一数值。若不同数值少于 2 个，返回 None。",
+    "expected": {
+      "entry": "second_largest",
+      "tests": "assert second_largest([10, 20, 4, 20]) == 10\nassert second_largest([5, 5, 5]) is None\nassert second_largest([1]) is None\nassert second_largest([-2, -1, 0]) == -1"
+    }
+  },
+  {
+    "id": "code-en-med-second-largest",
+    "category": "coding",
+    "language": "en",
+    "difficulty": "medium",
+    "skill": "algorithm",
+    "prompt": "Output only Python code: Implement second_largest(nums: list[int]) -> int | None. Return the second largest distinct integer in nums, or None if fewer than 2 distinct integers exist.",
+    "expected": {
+      "entry": "second_largest",
+      "tests": "assert second_largest([10, 20, 4, 20]) == 10\nassert second_largest([5, 5, 5]) is None\nassert second_largest([1]) is None\nassert second_largest([-2, -1, 0]) == -1"
+    }
+  },
+  {
+    "id": "perf-zh-med-kv-format",
+    "category": "performance",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "exact_kv",
+    "prompt": "只输出这一行，不得有任何其他字符或空格：status=success;code=200;mode=sync",
+    "expected": {
+      "regex": "^status=success;code=200;mode=sync$"
+    }
+  },
+  {
+    "id": "perf-en-med-kv-format",
+    "category": "performance",
+    "language": "en",
+    "difficulty": "medium",
+    "skill": "exact_kv",
+    "prompt": "Output exactly this single line without spaces or commentary: tier=standard;latency=fast;valid=true",
+    "expected": {
+      "exact": "tier=standard;latency=fast;valid=true"
+    }
+  },
+  {
+    "id": "perf-zh-med-bounded-token",
+    "category": "performance",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "bounded_output",
+    "prompt": "只输出一句不超过15个汉字的内容，必须包含“核心”和“稳定”，且绝对不得包含数字。",
+    "expected": {
+      "contains": [
+        "核心",
+        "稳定"
+      ],
+      "max_chars": 15,
+      "forbid": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ]
+    }
+  },
+  {
+    "id": "perf-en-med-bounded-token",
+    "category": "performance",
+    "language": "en",
+    "difficulty": "medium",
+    "skill": "bounded_output",
+    "prompt": "Output one sentence of at most 8 words containing both 'system' and 'ready', with no digits.",
+    "expected": {
+      "contains": [
+        "system",
+        "ready"
+      ],
+      "max_chars": 50,
+      "forbid": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ]
     }
   }
 ]

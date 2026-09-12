@@ -61,7 +61,14 @@ def load_tasks(suite: str, languages: list[str], seed: int, counts: dict[str, in
     suite_counts = counts if suite == "custom" and counts is not None else config["counts"]
     for category, limit in suite_counts.items():
         pool = [task for task in raw if task.category == category]
-        rng.shuffle(pool)
+        if suite == "standard":
+            med_pool = [t for t in pool if t.difficulty == "medium"]
+            easy_pool = [t for t in pool if t.difficulty == "easy"]
+            rng.shuffle(med_pool)
+            rng.shuffle(easy_pool)
+            pool = med_pool + easy_pool
+        else:
+            rng.shuffle(pool)
         if not pool: continue
         if limit is None: selected.extend(pool)
         else: selected.extend(pool[:limit])
