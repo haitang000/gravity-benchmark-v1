@@ -60,7 +60,7 @@ def tasks(suite: str = "quick", languages: str = "zh,en"):
 async def run_benchmark(request: RunRequest):
     task_count = len(load_tasks(request.suite, request.languages, request.seed, request.counts)) * len(request.model_ids)
     item = create_run(request.suite, request.model_dump(), detect_hardware(), task_count)
-    start(item.id, request.model_ids, request.suite, request.languages, request.generation, request.counts, request.seed, request.concurrency)
+    start(item.id, request.model_ids, request.suite, request.languages, request.generation, request.counts, request.seed, request.concurrency, request.retries)
     return item
 
 @app.get("/api/runs")
