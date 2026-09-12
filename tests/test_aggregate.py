@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 from backend.metrics.aggregate import aggregate, token_total
 
-def row(category, score, passed=True, **metrics): return SimpleNamespace(category=category, score=score, passed=passed, metrics=metrics)
+def row(category, score, passed=True, task_id="t", language="en", difficulty="easy", **metrics): return SimpleNamespace(category=category, score=score, passed=passed, task_id=task_id, language=language, difficulty=difficulty, metrics=metrics)
 
 def test_token_total():
     assert token_total({"input_tokens": 10, "output_tokens": 20}) == 30

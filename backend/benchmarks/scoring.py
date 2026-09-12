@@ -30,13 +30,30 @@ def _score_instruction(output: str, expected: dict[str, Any]) -> tuple[float, di
     if "json_schema" in expected:
         try:
             parsed = json.loads(output)
-            def valid_type(value: Any, typ: str) -> bool:
-                if typ == "string": return isinstance(value, str)
-                if typ == "integer": return isinstance(value, int) and not isinstance(value, bool)
-                if typ == "boolean": return isinstance(value, bool)
-                if typ == "number": return isinstance(value, (int, float)) and not isinstance(value, bool)
-                return False
-            checks.extend(valid_type(parsed.get(k), typ) for k, typ in expected["json_schema"].items())
+            def valid_schema(value: Any, schema: Any) -> bool:
+                if isinstance(schema, str):
+                    if schema == "string": return isinstance(value, str)
+                    if schema == "integer": return isinstance(value, int) and not isinstance(value, bool)
+                    if schema == "boolean": return isinstance(value, bool)
+                    if schema == "number": return isinstance(value, (int, float)) and not isinstance(value, bool)
+                    if schema == "array": return isinstance(value, list)
+                    if schema == "object": return isinstance(value, dict)
+                    return False
+                if not isinstance(schema, dict) or not isinstance(value, (dict, list)) and schema.get("type") in {"object", "array"}:
+                    return False
+                kind = schema.get("type")
+                if kind and not valid_schema(value, kind): return False
+                if kind == "object":
+                    properties = schema.get("properties", {})
+                    return all(key in value and valid_schema(value[key], child) for key, child in properties.items())
+                if kind == "array":
+                    return all(valid_schema(item, schema["items"]) for item in value) if "items" in schema else True
+                return True
+            schema = expected["json_schema"]
+            if isinstance(schema, dict) and schema.get("type"):
+                checks.append(valid_schema(parsed, schema))
+            else:
+                checks.extend(valid_schema(parsed.get(k), typ) for k, typ in schema.items())
         except (json.JSONDecodeError, AttributeError): checks.append(False)
     if "line_count" in expected: checks.append(len([x for x in output.splitlines() if x.strip()]) == expected["line_count"])
     if expected.get("lowercase"): checks.append(output == output.lower())
@@ -44,6 +61,9 @@ def _score_instruction(output: str, expected: dict[str, Any]) -> tuple[float, di
     if "contains" in expected: checks.extend(item in output for item in expected["contains"])
     if "forbid" in expected: checks.extend(item not in output for item in expected["forbid"])
     if "max_chars" in expected: checks.append(len(output.strip()) <= expected["max_chars"])
+    if "min_chars" in expected: checks.append(len(output.strip()) >= expected["min_chars"])
+    if "max_lines" in expected: checks.append(len([x for x in output.splitlines() if x.strip()]) <= expected["max_lines"])
+    if "exact" in expected: checks.append(output.strip() == expected["exact"])
     if "exact_lines" in expected: checks.append([x.strip() for x in output.splitlines() if x.strip()] == expected["exact_lines"])
     if "prefix" in expected: checks.extend(x.startswith(expected["prefix"]) for x in output.splitlines() if x.strip())
     if "json_keys" in expected:
@@ -53,7 +73,13 @@ def _score_instruction(output: str, expected: dict[str, Any]) -> tuple[float, di
         try:
             parsed = json.loads(output); spec = expected["json_array"]
             checks.append(isinstance(parsed, list) and len(parsed) == spec["length"])
-            for item in parsed: checks.extend(isinstance(item.get(k), str if typ == "string" else int) for k, typ in spec["fields"].items())
+            for item in parsed:
+                checks.extend(
+                    isinstance(item.get(k), str) if typ == "string" else
+                    isinstance(item.get(k), int) and not isinstance(item.get(k), bool) if typ == "integer" else
+                    isinstance(item.get(k), bool) if typ == "boolean" else False
+                    for k, typ in spec["fields"].items()
+                )
         except (json.JSONDecodeError, TypeError, AttributeError): checks.append(False)
     return (sum(checks) / len(checks) if checks else 0), {"checks": checks}
 

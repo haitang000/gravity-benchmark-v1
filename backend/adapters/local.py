@@ -4,6 +4,7 @@ import asyncio
 import time
 from typing import Any
 
+from backend.adapters.base import OnText, generation_speed
 from backend.hardware.detect import detect_hardware
 from backend.schemas import GenerationConfig, GenerationResult, HealthResult, Message
 
@@ -29,7 +30,7 @@ class LlamaCppAdapter:
         except Exception as exc:
             return HealthResult(ok=False, message=f"llama.cpp unavailable: {exc}", hardware=detect_hardware())
 
-    async def generate(self, messages: list[Message], generation: GenerationConfig) -> GenerationResult:
+    async def generate(self, messages: list[Message], generation: GenerationConfig, on_text: OnText | None = None) -> GenerationResult:
         started = time.perf_counter()
         try:
             llm = await asyncio.to_thread(self._load)
@@ -39,7 +40,7 @@ class LlamaCppAdapter:
             usage = output.get("usage", {})
             generated = usage.get("completion_tokens", max(1, len(text.split())))
             total = usage.get("total_tokens", generated)
-            return GenerationResult(text=text, input_tokens=usage.get("prompt_tokens"), output_tokens=generated, latency_ms=latency, generation_tokens_per_second=generated / (latency / 1000), total_tokens_per_second=total / (latency / 1000), backend_metadata={"engine": "llama.cpp", "n_gpu_layers": self.config.get("n_gpu_layers", 0)})
+            return GenerationResult(text=text, input_tokens=usage.get("prompt_tokens"), output_tokens=generated, latency_ms=latency, generation_tokens_per_second=generation_speed(generated, latency), total_tokens_per_second=total / (latency / 1000) if latency else None, backend_metadata={"engine": "llama.cpp", "n_gpu_layers": self.config.get("n_gpu_layers", 0)})
         except Exception as exc:
             return GenerationResult(error=str(exc), latency_ms=(time.perf_counter() - started) * 1000)
 
@@ -71,7 +72,7 @@ class TransformersAdapter:
         except Exception as exc:
             return HealthResult(ok=False, message=f"Transformers unavailable: {exc}", hardware=detect_hardware())
 
-    async def generate(self, messages: list[Message], generation: GenerationConfig) -> GenerationResult:
+    async def generate(self, messages: list[Message], generation: GenerationConfig, on_text: OnText | None = None) -> GenerationResult:
         started = time.perf_counter()
         try:
             if self._model is None: await asyncio.to_thread(self._load)
@@ -85,7 +86,7 @@ class TransformersAdapter:
                 return self._tokenizer.decode(new_ids, skip_special_tokens=True), int(inputs.input_ids.shape[1]), int(new_ids.shape[0])
             text, input_tokens, output_tokens = await asyncio.to_thread(infer)
             latency = (time.perf_counter() - started) * 1000
-            return GenerationResult(text=text, input_tokens=input_tokens, output_tokens=output_tokens, latency_ms=latency, generation_tokens_per_second=output_tokens / (latency / 1000), total_tokens_per_second=(input_tokens + output_tokens) / (latency / 1000), backend_metadata={"engine": "transformers", "device": self._device})
+            return GenerationResult(text=text, input_tokens=input_tokens, output_tokens=output_tokens, latency_ms=latency, generation_tokens_per_second=generation_speed(output_tokens, latency), total_tokens_per_second=(input_tokens + output_tokens) / (latency / 1000) if latency else None, backend_metadata={"engine": "transformers", "device": self._device})
         except Exception as exc:
             return GenerationResult(error=str(exc), latency_ms=(time.perf_counter() - started) * 1000)
 

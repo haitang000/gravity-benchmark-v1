@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import time
 from typing import Any
 
 import httpx
 
+from backend.adapters.base import OnText, generation_speed
 from backend.hardware.detect import detect_hardware
 from backend.schemas import GenerationConfig, GenerationResult, HealthResult, Message
 
@@ -46,21 +48,42 @@ class OpenAICompatibleAdapter:
         except httpx.HTTPError as exc:
             return HealthResult(ok=False, message=str(exc), hardware=detect_hardware())
 
-    async def generate(self, messages: list[Message], generation: GenerationConfig) -> GenerationResult:
+    async def generate(self, messages: list[Message], generation: GenerationConfig, on_text: OnText | None = None) -> GenerationResult:
         payload = {"model": self.model_ref, "messages": [m.model_dump() for m in messages], **generation.model_dump(exclude_none=True)}
+        if on_text is not None: payload["stream"] = True
         started, retries = time.perf_counter(), 0
         for attempt in range(self.retries + 1):
             try:
                 async with httpx.AsyncClient(timeout=self.timeout) as client:
-                    response = await client.post(self.chat_url, json=payload, headers=self._headers())
-                    response.raise_for_status()
-                    data = response.json()
-                elapsed = (time.perf_counter() - started) * 1000
-                text = data["choices"][0]["message"]["content"] or ""
-                usage = data.get("usage", {})
-                output = usage.get("completion_tokens", max(1, len(text.split())))
-                total = usage.get("total_tokens", usage.get("prompt_tokens", 0) + output)
-                return GenerationResult(text=text, input_tokens=usage.get("prompt_tokens"), output_tokens=output, latency_ms=elapsed, generation_tokens_per_second=output / (elapsed / 1000) if elapsed else None, total_tokens_per_second=total / (elapsed / 1000) if elapsed else None, retries=retries, backend_metadata={"base_url": self.base_url})
+                    if on_text is None:
+                        response = await client.post(self.chat_url, json=payload, headers=self._headers())
+                        response.raise_for_status()
+                        data = response.json()
+                        elapsed = (time.perf_counter() - started) * 1000
+                        text = data["choices"][0]["message"]["content"] or ""
+                        usage = data.get("usage", {})
+                        output = usage.get("completion_tokens", max(1, len(text.split())))
+                        total = usage.get("total_tokens", usage.get("prompt_tokens", 0) + output)
+                        return GenerationResult(text=text, input_tokens=usage.get("prompt_tokens"), output_tokens=output, latency_ms=elapsed, generation_tokens_per_second=generation_speed(output, elapsed), total_tokens_per_second=total / (elapsed / 1000) if elapsed else None, retries=retries, backend_metadata={"base_url": self.base_url})
+                    parts: list[str] = []; ttft = None; usage = {}
+                    async with client.stream("POST", self.chat_url, json=payload, headers=self._headers()) as response:
+                        response.raise_for_status()
+                        async for line in response.aiter_lines():
+                            if not line.startswith("data:"): continue
+                            data = line[5:].strip()
+                            if data == "[DONE]": break
+                            chunk = json.loads(data)
+                            if chunk.get("usage"): usage = chunk["usage"]
+                            delta = (chunk.get("choices") or [{}])[0].get("delta", {}).get("content") or ""
+                            if not delta: continue
+                            if ttft is None: ttft = (time.perf_counter() - started) * 1000
+                            parts.append(delta)
+                            await on_text("".join(parts))
+                    elapsed = (time.perf_counter() - started) * 1000
+                    text = "".join(parts)
+                    output = usage.get("completion_tokens", max(1, len(text.split())))
+                    total = usage.get("total_tokens", usage.get("prompt_tokens", 0) + output)
+                    return GenerationResult(text=text, input_tokens=usage.get("prompt_tokens"), output_tokens=output, ttft_ms=ttft, latency_ms=elapsed, generation_tokens_per_second=generation_speed(output, elapsed, ttft), total_tokens_per_second=total / (elapsed / 1000) if elapsed else None, retries=retries, backend_metadata={"base_url": self.base_url, "stream": True})
             except httpx.HTTPError as exc:
                 retries = attempt + 1
                 if attempt == self.retries:

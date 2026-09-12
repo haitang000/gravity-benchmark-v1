@@ -99,6 +99,8 @@ class RunRequest(BaseModel):
     seed: int = 42
     warmup: int = Field(default=1, ge=0, le=5)
     retries: int = Field(default=1, ge=0, le=5)
+    score_retries: int = Field(default=0, ge=0, le=5)
+    repeats: int = Field(default=1, ge=1, le=10)
     counts: dict[Literal["instruction", "math", "coding", "performance"], int] = Field(default_factory=dict)
     context_lengths: list[int] = Field(default_factory=lambda: [0], min_length=1, max_length=8)
 

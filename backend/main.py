@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections import Counter
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -9,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from backend.adapters.factory import create_adapter
 from backend.benchmarks.tasks import load_tasks
-from backend.execution.runner import cancel, start
+from backend.execution.runner import cancel, start, streaming_outputs
 from backend.hardware.detect import detect_hardware
 from backend.reports import export_report, report
 from backend.schemas import ModelProfileIn, RunProgress, RunRequest
@@ -54,13 +55,14 @@ async def model_health(model_id: int):
 
 @app.get("/api/benchmarks/tasks")
 def tasks(suite: str = "quick", languages: str = "zh,en"):
-    return {"suite": suite, "count": len(load_tasks(suite, languages.split(","), 42)), "categories": ["instruction", "math", "coding", "performance"]}
+    selected = load_tasks(suite, languages.split(","), 42)
+    return {"suite": suite, "count": len(selected), "categories": ["instruction", "math", "coding", "performance"], "difficulty_counts": dict(Counter(task.difficulty for task in selected)), "category_counts": dict(Counter(task.category for task in selected)), "dataset_version": "core+extended"}
 
 @app.post("/api/runs", response_model=RunProgress)
 async def run_benchmark(request: RunRequest):
-    task_count = len(load_tasks(request.suite, request.languages, request.seed, request.counts)) * len(request.model_ids)
+    task_count = len(load_tasks(request.suite, request.languages, request.seed, request.counts)) * len(request.model_ids) * request.repeats
     item = create_run(request.suite, request.model_dump(), detect_hardware(), task_count)
-    start(item.id, request.model_ids, request.suite, request.languages, request.generation, request.counts, request.seed, request.concurrency, request.retries)
+    start(item.id, request.model_ids, request.suite, request.languages, request.generation, request.counts, request.seed, request.concurrency, request.retries, request.repeats, request.score_retries)
     return item
 
 @app.get("/api/runs")
@@ -70,7 +72,7 @@ def runs(): return list_runs()
 def run_detail(run_id: int):
     item = get_run(run_id)
     if not item: raise HTTPException(404, "Run not found")
-    return {"run": item, "results": results_for_run(run_id), "report": report(item)}
+    return {"run": item, "results": results_for_run(run_id), "report": report(item), "streaming": streaming_outputs(run_id)}
 
 @app.post("/api/runs/{run_id}/cancel")
 def cancel_run(run_id: int): return {"cancelled": cancel(run_id)}
