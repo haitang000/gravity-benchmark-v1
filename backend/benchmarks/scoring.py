@@ -65,6 +65,11 @@ def _score_instruction(output: str, expected: dict[str, Any]) -> tuple[float, di
     if "max_lines" in expected: checks.append(len([x for x in output.splitlines() if x.strip()]) <= expected["max_lines"])
     if "exact" in expected: checks.append(output.strip() == expected["exact"])
     if "exact_lines" in expected: checks.append([x.strip() for x in output.splitlines() if x.strip()] == expected["exact_lines"])
+    if "line_prefixes" in expected:
+        lines = [x for x in output.splitlines() if x.strip()]
+        prefixes = expected["line_prefixes"]
+        checks.append(len(lines) == len(prefixes))
+        checks.extend(line.startswith(prefix) for line, prefix in zip(lines, prefixes))
     if "prefix" in expected: checks.extend(x.startswith(expected["prefix"]) for x in output.splitlines() if x.strip())
     if "json_keys" in expected:
         try: checks.extend(key in json.loads(output) for key in expected["json_keys"])

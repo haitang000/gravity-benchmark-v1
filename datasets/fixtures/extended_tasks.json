@@ -1,0 +1,681 @@
+[
+  {
+    "id": "inst-zh-hard-json",
+    "category": "instruction",
+    "language": "zh",
+    "difficulty": "hard",
+    "skill": "nested_json",
+    "prompt": "只输出 JSON：创建一个 order 对象，包含 id 为 GB-2048、items 为两个对象的数组；第一个对象 name 为 notebook、qty 为 2，第二个对象 name 为 pen、qty 为 3；total_qty 为 5。不要 markdown。",
+    "expected": {
+      "json_schema": {
+        "type": "object",
+        "properties": {
+          "order": {
+            "type": "object",
+            "properties": {
+              "id": "string",
+              "items": "array"
+            }
+          },
+          "total_qty": "integer"
+        }
+      }
+    }
+  },
+  {
+    "id": "inst-en-hard-json",
+    "category": "instruction",
+    "language": "en",
+    "difficulty": "hard",
+    "skill": "nested_json",
+    "prompt": "Output only JSON. Include a user object with name Alice, roles as an array of two strings, and active as boolean true; include exactly the top-level keys user and count, with count 2.",
+    "expected": {
+      "json_schema": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "type": "object",
+            "properties": {
+              "name": "string",
+              "roles": {
+                "type": "array",
+                "items": "string"
+              },
+              "active": "boolean"
+            }
+          },
+          "count": "integer"
+        }
+      }
+    }
+  },
+  {
+    "id": "inst-zh-hard-constraints",
+    "category": "instruction",
+    "language": "zh",
+    "difficulty": "hard",
+    "skill": "multi_constraint",
+    "prompt": "只输出两行中文。第一行必须以“结论：”开头且包含“可行”，第二行必须以“依据：”开头且包含“成本”，两行都不得出现问号或感叹号。",
+    "expected": {
+      "line_count": 2,
+      "prefix": "结论：",
+      "contains": [
+        "可行",
+        "成本"
+      ],
+      "forbid": [
+        "?",
+        "？",
+        "!",
+        "！"
+      ]
+    }
+  },
+  {
+    "id": "inst-en-hard-constraints",
+    "category": "instruction",
+    "language": "en",
+    "difficulty": "hard",
+    "skill": "multi_constraint",
+    "prompt": "Write exactly three lines. Line 1 starts with PLAN:, line 2 starts with RISK:, line 3 starts with TEST:. Every line contains the word model and no line contains a question mark.",
+    "expected": {
+      "line_count": 3,
+      "contains": [
+        "model"
+      ],
+      "forbid": [
+        "?"
+      ],
+      "line_prefixes": [
+        "PLAN:",
+        "RISK:",
+        "TEST:"
+      ]
+    }
+  },
+  {
+    "id": "inst-zh-hard-extract",
+    "category": "instruction",
+    "language": "zh",
+    "difficulty": "hard",
+    "skill": "structured_extraction",
+    "prompt": "从句子“周明在上海于2025年11月12日采购了4台显示器，总价为5600元”中提取姓名、城市、日期、数量和金额，只输出 JSON。",
+    "expected": {
+      "json_keys": [
+        "name",
+        "city",
+        "date",
+        "quantity",
+        "amount"
+      ],
+      "contains": [
+        "周明",
+        "上海",
+        "2025-11-12",
+        "4",
+        "5600"
+      ]
+    }
+  },
+  {
+    "id": "inst-en-hard-order",
+    "category": "instruction",
+    "language": "en",
+    "difficulty": "hard",
+    "skill": "ordered_format",
+    "prompt": "Return exactly four lines in this order: INPUT=alpha, COUNT=3, STATUS=ready, END=yes. Do not add spaces or extra text.",
+    "expected": {
+      "exact_lines": [
+        "INPUT=alpha",
+        "COUNT=3",
+        "STATUS=ready",
+        "END=yes"
+      ]
+    }
+  },
+  {
+    "id": "math-zh-hard-steps",
+    "category": "math",
+    "language": "zh",
+    "difficulty": "hard",
+    "skill": "multi_step",
+    "prompt": "一件商品先涨价20%，再打八折，最后价格为96元。原价是多少？只输出最终数字。",
+    "expected": {
+      "answer": "100",
+      "topic": "percentage"
+    }
+  },
+  {
+    "id": "math-en-hard-steps",
+    "category": "math",
+    "language": "en",
+    "difficulty": "hard",
+    "skill": "multi_step",
+    "prompt": "A tank is 3/5 full. After adding 24 liters it is 9/10 full. What is the tank capacity in liters? Give only the number.",
+    "expected": {
+      "answer": "80",
+      "topic": "ratio"
+    }
+  },
+  {
+    "id": "math-zh-hard-system",
+    "category": "math",
+    "language": "zh",
+    "difficulty": "hard",
+    "skill": "system",
+    "prompt": "甲乙两数之和为35，甲数的两倍比乙数多13，甲数是多少？只输出数字。",
+    "expected": {
+      "answer": "16",
+      "topic": "algebra"
+    }
+  },
+  {
+    "id": "math-en-hard-probability",
+    "category": "math",
+    "language": "en",
+    "difficulty": "hard",
+    "skill": "probability",
+    "prompt": "A bag has 3 red, 2 blue, and 1 green ball. Two balls are drawn without replacement. What is the probability both are red? Give a simplified fraction.",
+    "expected": {
+      "answer": "1/5",
+      "topic": "probability"
+    }
+  },
+  {
+    "id": "math-zh-hard-sequence",
+    "category": "math",
+    "language": "zh",
+    "difficulty": "hard",
+    "skill": "sequence",
+    "prompt": "数列 2、5、10、17、26 遵循同一规律，下一个数是多少？只输出数字。",
+    "expected": {
+      "answer": "37",
+      "topic": "sequence"
+    }
+  },
+  {
+    "id": "math-en-hard-geometry",
+    "category": "math",
+    "language": "en",
+    "difficulty": "hard",
+    "skill": "geometry",
+    "prompt": "A rectangle has perimeter  fifty-two units. Its length is 5 units more than its width. What is its area? Give only the number.",
+    "expected": {
+      "answer": "156",
+      "topic": "geometry"
+    }
+  },
+  {
+    "id": "code-zh-hard-boundary",
+    "category": "coding",
+    "language": "zh",
+    "difficulty": "hard",
+    "skill": "edge_cases",
+    "prompt": "只输出 Python 代码：实现函数 safe_divide(a, b)，返回 a 除以 b；当 b 为 0 时返回 None，并保留浮点结果。",
+    "expected": {
+      "entry": "safe_divide",
+      "tests": "assert safe_divide(7,2)==3.5\nassert safe_divide(1,0) is None\nassert safe_divide(0,5)==0.0"
+    }
+  },
+  {
+    "id": "code-en-hard-boundary",
+    "category": "coding",
+    "language": "en",
+    "difficulty": "hard",
+    "skill": "edge_cases",
+    "prompt": "Output only Python code implementing merge_sorted(a, b), merging two sorted lists into a new sorted list without mutating either input.",
+    "expected": {
+      "entry": "merge_sorted",
+      "tests": "x=[1,3,5]; y=[2,4,6]; assert merge_sorted(x,y)==[1,2,3,4,5,6]; assert x==[1,3,5] and y==[2,4,6]; assert merge_sorted([],[])==[]"
+    }
+  },
+  {
+    "id": "code-zh-hard-parser",
+    "category": "coding",
+    "language": "zh",
+    "difficulty": "hard",
+    "skill": "parsing",
+    "prompt": "只输出 Python 代码：实现函数 count_words(text)，按空白切分并统计每个单词出现次数，大小写不敏感，返回字典。",
+    "expected": {
+      "entry": "count_words",
+      "tests": "assert count_words('Red blue red')=={'red':2,'blue':1}\nassert count_words('')=={}\nassert count_words('  A   a ')=={'a':2}"
+    }
+  },
+  {
+    "id": "code-en-hard-repair",
+    "category": "coding",
+    "language": "en",
+    "difficulty": "hard",
+    "skill": "repair",
+    "prompt": "Fix the function and output only corrected Python code. It should return the first repeated item, or None if no item repeats.",
+    "expected": {
+      "entry": "first_repeat",
+      "tests": "assert first_repeat([3,1,4,1,5])==1\nassert first_repeat(['a','b','c']) is None\nassert first_repeat([]) is None"
+    }
+  },
+  {
+    "id": "code-zh-hard-matrix",
+    "category": "coding",
+    "language": "zh",
+    "difficulty": "hard",
+    "skill": "matrix",
+    "prompt": "只输出 Python 代码：实现函数 flatten_unique(matrix)，按行读取二维列表，去除重复元素但保持首次出现顺序。",
+    "expected": {
+      "entry": "flatten_unique",
+      "tests": "assert flatten_unique([[1,2],[2,3],[1]])==[1,2,3]\nassert flatten_unique([])==[]"
+    }
+  },
+  {
+    "id": "code-en-hard-window",
+    "category": "coding",
+    "language": "en",
+    "difficulty": "hard",
+    "skill": "algorithm",
+    "prompt": "Write only Python code for max_window_sum(nums, k), returning the maximum sum of any contiguous window of length k, or None when k is invalid.",
+    "expected": {
+      "entry": "max_window_sum",
+      "tests": "assert max_window_sum([2,1,5,1,3,2],3)==9\nassert max_window_sum([1,2],0) is None\nassert max_window_sum([1,2],3) is None"
+    }
+  },
+  {
+    "id": "perf-zh-hard-format",
+    "category": "performance",
+    "language": "zh",
+    "difficulty": "hard",
+    "skill": "short_exact",
+    "prompt": "只输出这一行，不得有其他字符：latency_ms=120;tokens=64",
+    "expected": {
+      "regex": "^latency_ms=120;tokens=64$"
+    }
+  },
+  {
+    "id": "perf-en-hard-format",
+    "category": "performance",
+    "language": "en",
+    "difficulty": "hard",
+    "skill": "short_exact",
+    "prompt": "Output exactly one line: status=ready|score=0.75|count=3",
+    "expected": {
+      "exact": "status=ready|score=0.75|count=3"
+    }
+  },
+  {
+    "id": "perf-zh-medium",
+    "category": "performance",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "bounded_output",
+    "prompt": "只输出一句不超过20个汉字，必须包含“速度”和“稳定”，不得包含数字。",
+    "expected": {
+      "contains": [
+        "速度",
+        "稳定"
+      ],
+      "max_chars": 20,
+      "forbid": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ]
+    }
+  },
+  {
+    "id": "perf-en-medium",
+    "category": "performance",
+    "language": "en",
+    "difficulty": "medium",
+    "skill": "bounded_output",
+    "prompt": "Answer with one sentence of at most 12 words containing both latency and throughput, with no digits.",
+    "expected": {
+      "contains": [
+        "latency",
+        "throughput"
+      ],
+      "max_chars": 100,
+      "forbid": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ]
+    }
+  },
+  {
+    "id": "inst-zh-hard-interlocking",
+    "category": "instruction",
+    "language": "zh",
+    "difficulty": "hard",
+    "skill": "multi_constraint",
+    "prompt": "只输出三行关于深空探测的内容。第1行以“【目标】”开头，第2行以“【轨迹】”开头，第3行以“【信号】”开头；必须包含“探测器”；绝对禁止出现“星”与“月”。不要其他文字。",
+    "expected": {
+      "line_count": 3,
+      "line_prefixes": [
+        "【目标】",
+        "【轨迹】",
+        "【信号】"
+      ],
+      "contains": [
+        "探测器"
+      ],
+      "forbid": [
+        "星",
+        "月"
+      ]
+    }
+  },
+  {
+    "id": "inst-en-hard-interlocking",
+    "category": "instruction",
+    "language": "en",
+    "difficulty": "hard",
+    "skill": "multi_constraint",
+    "prompt": "Output exactly three lines. Line 1 starts with [TARGET], line 2 starts with [PATH], line 3 starts with [SIGNAL]. Must contain the word 'detector'. Must NOT contain the words 'star' or 'moon'.",
+    "expected": {
+      "line_count": 3,
+      "line_prefixes": [
+        "[TARGET]",
+        "[PATH]",
+        "[SIGNAL]"
+      ],
+      "contains": [
+        "detector"
+      ],
+      "forbid": [
+        "star",
+        "moon"
+      ]
+    }
+  },
+  {
+    "id": "inst-zh-hard-negative-phrase",
+    "category": "instruction",
+    "language": "zh",
+    "difficulty": "hard",
+    "skill": "negative_constraint",
+    "prompt": "只用一行话描写时钟。必须包含词语“指针”，且全文绝对禁止出现汉字“表”和“时”。不要输出多余解释。",
+    "expected": {
+      "line_count": 1,
+      "contains": [
+        "指针"
+      ],
+      "forbid": [
+        "表",
+        "时"
+      ]
+    }
+  },
+  {
+    "id": "inst-en-hard-lipogram",
+    "category": "instruction",
+    "language": "en",
+    "difficulty": "hard",
+    "skill": "negative_constraint",
+    "prompt": "Write exactly one line describing a clock without using the letter 'e' or 'E'. It must contain the word 'clock' and no question marks.",
+    "expected": {
+      "line_count": 1,
+      "contains": [
+        "clock"
+      ],
+      "forbid": [
+        "e",
+        "E",
+        "?"
+      ]
+    }
+  },
+  {
+    "id": "inst-zh-hard-counterfactual",
+    "category": "instruction",
+    "language": "zh",
+    "difficulty": "hard",
+    "skill": "counterfactual",
+    "prompt": "前提1：所有鸟类都是哺乳动物。前提2：所有哺乳动物都绝对不会飞。前提3：老鹰是一种鸟类。严格仅根据上述前提（无视现实常识），老鹰会飞吗？只能回答“会”或“不会”。",
+    "expected": {
+      "exact": "不会"
+    }
+  },
+  {
+    "id": "inst-en-hard-counterfactual",
+    "category": "instruction",
+    "language": "en",
+    "difficulty": "hard",
+    "skill": "counterfactual",
+    "prompt": "Premise 1: All birds are mammals. Premise 2: No mammal can fly. Premise 3: An eagle is a bird. Question: Based strictly on these premises (ignore real-world facts), can an eagle fly? Reply with only YES or NO.",
+    "expected": {
+      "exact": "NO"
+    }
+  },
+  {
+    "id": "math-zh-hard-custom-op",
+    "category": "math",
+    "language": "zh",
+    "difficulty": "hard",
+    "skill": "custom_operator",
+    "prompt": "定义新运算：对于任意实数 a 和 b，a ⊗ b = a * b - a + 2，a ⊕ b = 2 * a + b。计算 (3 ⊗ 4) ⊕ 5 的值。只输出最终数字。",
+    "expected": {
+      "answer": "27",
+      "topic": "symbolic"
+    }
+  },
+  {
+    "id": "math-en-hard-custom-op",
+    "category": "math",
+    "language": "en",
+    "difficulty": "hard",
+    "skill": "custom_operator",
+    "prompt": "Define custom operations: a # b = a * b - 2 * a + 1 and a $ b = 3 * a - b. What is the value of (4 # 3) $ 7? Give only the number.",
+    "expected": {
+      "answer": "8",
+      "topic": "symbolic"
+    }
+  },
+  {
+    "id": "math-zh-hard-harmonic-speed",
+    "category": "math",
+    "language": "zh",
+    "difficulty": "hard",
+    "skill": "rate",
+    "prompt": "一辆车从甲地开往乙地，去程速度为40公里/小时，沿原路返回速度为60公里/小时。求往返全程的平均速度是多少（公里/小时）？只输出数字。",
+    "expected": {
+      "answer": "48",
+      "topic": "harmonic_mean"
+    }
+  },
+  {
+    "id": "math-en-hard-harmonic-speed",
+    "category": "math",
+    "language": "en",
+    "difficulty": "hard",
+    "skill": "rate",
+    "prompt": "A car travels from A to B at 30 mph and returns along the same route at 60 mph. What is the average speed for the whole round trip in mph? Output only the number.",
+    "expected": {
+      "answer": "40",
+      "topic": "harmonic_mean"
+    }
+  },
+  {
+    "id": "math-zh-hard-pie-exact",
+    "category": "math",
+    "language": "zh",
+    "difficulty": "hard",
+    "skill": "combinatorics",
+    "prompt": "100名学生中，同时学数理的有15人，同时学数化的有12人，同时学理化的有10人，三门都学的有5人。恰好学了两门学科的学生有多少人？只输出最终数字。",
+    "expected": {
+      "answer": "22",
+      "topic": "inclusion_exclusion"
+    }
+  },
+  {
+    "id": "math-en-hard-pie-exact",
+    "category": "math",
+    "language": "en",
+    "difficulty": "hard",
+    "skill": "combinatorics",
+    "prompt": "In a club, 15 take Math and Physics, 12 take Math and Chemistry, 10 take Physics and Chemistry, and 5 take all three. How many students take EXACTLY two of these subjects? Give only the number.",
+    "expected": {
+      "answer": "22",
+      "topic": "inclusion_exclusion"
+    }
+  },
+  {
+    "id": "math-zh-hard-base-carry",
+    "category": "math",
+    "language": "zh",
+    "difficulty": "hard",
+    "skill": "base_arithmetic",
+    "prompt": "在八进制下计算 57(8) + 45(8)，结果仍以八进制表示。只输出该八进制纯数字。",
+    "expected": {
+      "answer": "124",
+      "topic": "radix"
+    }
+  },
+  {
+    "id": "math-en-hard-base-carry",
+    "category": "math",
+    "language": "en",
+    "difficulty": "hard",
+    "skill": "base_arithmetic",
+    "prompt": "Compute 46 in base 7 plus 35 in base 7. Express the result in base 7. Output only the number.",
+    "expected": {
+      "answer": "114",
+      "topic": "radix"
+    }
+  },
+  {
+    "id": "code-zh-hard-compact-ranges",
+    "category": "coding",
+    "language": "zh",
+    "difficulty": "hard",
+    "skill": "intervals",
+    "prompt": "只输出 Python 代码：实现函数 compact_ranges(nums: list[int]) -> list[str]，输入已升序排列且无重复的整数列表，将连续数字区间压缩为 'start->end'，单个数字保留字符串形式。空列表返回空列表。禁止修改原列表。",
+    "expected": {
+      "entry": "compact_ranges",
+      "tests": "assert compact_ranges([0, 1, 2, 4, 5, 7]) == ['0->2', '4->5', '7']\nassert compact_ranges([]) == []\nassert compact_ranges([-3, -2, -1, 1]) == ['-3->-1', '1']\nassert compact_ranges([42]) == ['42']\nassert compact_ranges([1, 3, 5]) == ['1', '3', '5']"
+    }
+  },
+  {
+    "id": "code-en-hard-compact-ranges",
+    "category": "coding",
+    "language": "en",
+    "difficulty": "hard",
+    "skill": "intervals",
+    "prompt": "Output only Python code: Implement compact_ranges(nums: list[int]) -> list[str]. Given a sorted list of unique integers, return a list of string ranges in 'start->end' format for consecutive sequences, or 'val' for single numbers. Return an empty list if nums is empty. Do not mutate the original list.",
+    "expected": {
+      "entry": "compact_ranges",
+      "tests": "assert compact_ranges([0, 1, 2, 4, 5, 7]) == ['0->2', '4->5', '7']\nassert compact_ranges([]) == []\nassert compact_ranges([-3, -2, -1, 1]) == ['-3->-1', '1']\nassert compact_ranges([42]) == ['42']\nassert compact_ranges([1, 3, 5]) == ['1', '3', '5']"
+    }
+  },
+  {
+    "id": "code-zh-hard-rle-brackets",
+    "category": "coding",
+    "language": "zh",
+    "difficulty": "hard",
+    "skill": "parsing",
+    "prompt": "只输出 Python 代码：实现函数 decode_rle(s: str) -> str。输入为包含形如 k[string] 模式的编码字符串，表示括号内的子串重复 k 次（k 为正整数）。括号支持任意层级嵌套。空字符串返回空字符串。",
+    "expected": {
+      "entry": "decode_rle",
+      "tests": "assert decode_rle('3[a]2[bc]') == 'aaabcbc'\nassert decode_rle('3[a2[c]]') == 'accaccacc'\nassert decode_rle('2[abc]3[cd]ef') == 'abcabccdcdcdef'\nassert decode_rle('') == ''"
+    }
+  },
+  {
+    "id": "code-en-hard-rle-brackets",
+    "category": "coding",
+    "language": "en",
+    "difficulty": "hard",
+    "skill": "parsing",
+    "prompt": "Output only Python code: Implement decode_rle(s: str) -> str. The input string contains encoded patterns in the form k[string], where the string inside brackets is repeated k times (k is a positive integer). Brackets can be nested.",
+    "expected": {
+      "entry": "decode_rle",
+      "tests": "assert decode_rle('3[a]2[bc]') == 'aaabcbc'\nassert decode_rle('3[a2[c]]') == 'accaccacc'\nassert decode_rle('2[abc]3[cd]ef') == 'abcabccdcdcdef'\nassert decode_rle('') == ''"
+    }
+  },
+  {
+    "id": "inst-zh-hard-temporal-extract",
+    "category": "instruction",
+    "language": "zh",
+    "difficulty": "hard",
+    "skill": "temporal_override",
+    "prompt": "从以下文字中抽取最终确认的信息：“原定明天上午9点在第一会议室由王总主持的战略会，现改由李总主持，时间延至明天下午14:30，地点变更为第三研讨厅；参会人数由原定15人增加5人变为20人。”提取主持人、地点和人数，只输出 JSON，包含 host、venue、attendees 字段（attendees为整数）。不要任何解释或 markdown。",
+    "expected": {
+      "json_schema": {
+        "type": "object",
+        "properties": {
+          "host": "string",
+          "venue": "string",
+          "attendees": "integer"
+        }
+      },
+      "contains": [
+        "李总",
+        "第三研讨厅",
+        "20"
+      ],
+      "forbid": [
+        "王总",
+        "第一会议室"
+      ]
+    }
+  },
+  {
+    "id": "inst-en-hard-temporal-extract",
+    "category": "instruction",
+    "language": "en",
+    "difficulty": "hard",
+    "skill": "temporal_override",
+    "prompt": "Extract final confirmed details from this update: 'Flight AA101 departing at 08:00 from Gate 4 has been cancelled. Passengers are rebooked on flight UA202 departing at 11:30 from Gate 9. Total allowed bags increased from 1 to 2.' Output only JSON with keys flight (string), gate (string), and bags (integer).",
+    "expected": {
+      "json_schema": {
+        "type": "object",
+        "properties": {
+          "flight": "string",
+          "gate": "string",
+          "bags": "integer"
+        }
+      },
+      "contains": [
+        "UA202",
+        "Gate 9",
+        "2"
+      ],
+      "forbid": [
+        "AA101",
+        "Gate 4"
+      ]
+    }
+  },
+  {
+    "id": "inst-zh-hard-knights-liars",
+    "category": "instruction",
+    "language": "zh",
+    "difficulty": "hard",
+    "skill": "formal_logic",
+    "prompt": "甲乙丙三人中只有一人说真话。甲说：“乙在说谎。”乙说：“丙在说谎。”丙说：“甲和乙都在说谎。”谁说了真话？只输出单个汉字（甲、乙或丙），不得输出其他任何字符。",
+    "expected": {
+      "exact": "乙"
+    }
+  },
+  {
+    "id": "inst-en-hard-knights-liars",
+    "category": "instruction",
+    "language": "en",
+    "difficulty": "hard",
+    "skill": "formal_logic",
+    "prompt": "Among Alice, Bob, and Charlie, exactly one tells the truth. Alice says: 'Bob is lying.' Bob says: 'Charlie is lying.' Charlie says: 'Both Alice and Bob are lying.' Who tells the truth? Reply with only the single name: Alice, Bob, or Charlie.",
+    "expected": {
+      "exact": "Bob"
+    }
+  }
+]

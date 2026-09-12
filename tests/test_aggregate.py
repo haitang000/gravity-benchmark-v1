@@ -32,3 +32,13 @@ def test_aggregate_per_model():
     assert "coding" not in summary["models"]["1"]
     assert summary["models"]["2"]["total"]["score"] == 1
     assert summary["models"]["2"]["coding"]["count"] == 1
+
+def test_task_language_and_difficulty_token_breakdowns():
+    summary = aggregate([
+        row("math", 1, task_id="math-a", language="zh", difficulty="hard", input_tokens=10, output_tokens=5),
+        row("math", 0, passed=False, task_id="math-a", language="zh", difficulty="hard", input_tokens=20, output_tokens=7),
+        row("coding", 1, task_id="code-a", language="en", difficulty="medium", input_tokens=30, output_tokens=9),
+    ])
+    assert summary["task_breakdown"]["math-a"]["avg_total_tokens"] == 21
+    assert summary["language_breakdown"]["zh"]["avg_output_tokens"] == 6
+    assert summary["difficulty_breakdown"]["hard"]["avg_input_tokens"] == 15
