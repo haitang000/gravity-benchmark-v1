@@ -1,0 +1,536 @@
+[
+  {
+    "id": "inst-zh-json-1",
+    "category": "instruction",
+    "language": "zh",
+    "difficulty": "easy",
+    "skill": "json_schema",
+    "prompt": "只输出一个 JSON 对象，包含 name（字符串）和 count（整数）两个字段，name 为 GravityBench，count 为 2。",
+    "expected": {
+      "json_schema": {
+        "name": "string",
+        "count": "integer"
+      }
+    }
+  },
+  {
+    "id": "inst-en-list-1",
+    "category": "instruction",
+    "language": "en",
+    "difficulty": "easy",
+    "skill": "exact_format",
+    "prompt": "Reply with exactly three lowercase fruit names, one per line, and nothing else.",
+    "expected": {
+      "line_count": 3,
+      "lowercase": true
+    }
+  },
+  {
+    "id": "inst-zh-regex-1",
+    "category": "instruction",
+    "language": "zh",
+    "difficulty": "easy",
+    "skill": "regex",
+    "prompt": "只输出一行，格式必须是 ID: 后跟两个大写字母、一个连字符和三位数字。使用 AB 和 123。",
+    "expected": {
+      "regex": "^ID:AB-123$"
+    }
+  },
+  {
+    "id": "inst-en-json-2",
+    "category": "instruction",
+    "language": "en",
+    "difficulty": "easy",
+    "skill": "json_schema",
+    "prompt": "Return only JSON with boolean field enabled set to true and integer field retries set to 3.",
+    "expected": {
+      "json_schema": {
+        "enabled": "boolean",
+        "retries": "integer"
+      }
+    }
+  },
+  {
+    "id": "inst-zh-length-1",
+    "category": "instruction",
+    "language": "zh",
+    "difficulty": "easy",
+    "skill": "length",
+    "prompt": "只输出四个汉字：春夏秋冬。",
+    "expected": {
+      "regex": "^春夏秋冬$"
+    }
+  },
+  {
+    "id": "inst-en-contains-1",
+    "category": "instruction",
+    "language": "en",
+    "difficulty": "easy",
+    "skill": "constraint",
+    "prompt": "Answer in one sentence containing the words blue and quiet. Do not use a question mark.",
+    "expected": {
+      "contains": [
+        "blue",
+        "quiet"
+      ],
+      "forbid": [
+        "?"
+      ]
+    }
+  },
+  {
+    "id": "inst-zh-extract-1",
+    "category": "instruction",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "information_extraction",
+    "prompt": "从“李华将在2026年3月5日向北京团队提交12份报告”中抽取人名、日期、地点和数量。仅输出 JSON。",
+    "expected": {
+      "contains": [
+        "李华",
+        "2026-03-05",
+        "北京",
+        "12"
+      ]
+    }
+  },
+  {
+    "id": "inst-en-format-1",
+    "category": "instruction",
+    "language": "en",
+    "difficulty": "medium",
+    "skill": "exact_format",
+    "prompt": "Return a single line in the exact format CODE:<two uppercase letters>-<three digits>. Use AB and 123.",
+    "expected": {
+      "regex": "^CODE:AB-123$"
+    }
+  },
+  {
+    "id": "inst-zh-json-2",
+    "category": "instruction",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "json_schema",
+    "prompt": "仅输出 JSON 数组，数组必须有两个对象，每个对象都包含 key 和 value 字段，key 为字符串，value 为整数。",
+    "expected": {
+      "json_array": {
+        "length": 2,
+        "fields": {
+          "key": "string",
+          "value": "integer"
+        }
+      }
+    }
+  },
+  {
+    "id": "inst-en-bullets-1",
+    "category": "instruction",
+    "language": "en",
+    "difficulty": "medium",
+    "skill": "format_constraint",
+    "prompt": "Give exactly two bullet points. Each bullet must start with '- ' and contain the word test.",
+    "expected": {
+      "line_count": 2,
+      "prefix": "- ",
+      "contains": [
+        "test"
+      ]
+    }
+  },
+  {
+    "id": "inst-zh-multi-1",
+    "category": "instruction",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "multi_constraint",
+    "prompt": "只输出一句不超过12个汉字的礼貌提醒，必须包含“请”和“保存”，不得使用感叹号。",
+    "expected": {
+      "contains": [
+        "请",
+        "保存"
+      ],
+      "max_chars": 12,
+      "forbid": [
+        "!",
+        "！"
+      ]
+    }
+  },
+  {
+    "id": "inst-en-extract-1",
+    "category": "instruction",
+    "language": "en",
+    "difficulty": "medium",
+    "skill": "extraction",
+    "prompt": "From the sentence 'Mia ships 4 boxes to Rome on Monday', output only JSON containing name, quantity, city, and day.",
+    "expected": {
+      "json_keys": [
+        "name",
+        "quantity",
+        "city",
+        "day"
+      ],
+      "contains": [
+        "Mia",
+        "4",
+        "Rome",
+        "Monday"
+      ]
+    }
+  },
+  {
+    "id": "inst-zh-order-1",
+    "category": "instruction",
+    "language": "zh",
+    "difficulty": "easy",
+    "skill": "ordering",
+    "prompt": "将以下词语按字典序输出，每行一个：banana、apple、cherry。不要添加其他内容。",
+    "expected": {
+      "exact_lines": [
+        "apple",
+        "banana",
+        "cherry"
+      ]
+    }
+  },
+  {
+    "id": "inst-en-choice-1",
+    "category": "instruction",
+    "language": "en",
+    "difficulty": "easy",
+    "skill": "closed_choice",
+    "prompt": "Choose exactly one label from SAFE, FAST, or KIND. Choose FAST.",
+    "expected": {
+      "regex": "^FAST$"
+    }
+  },
+  {
+    "id": "inst-zh-code-1",
+    "category": "instruction",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "code_fence",
+    "prompt": "只输出 Python 代码块，代码定义函数 greet() 并返回字符串 hello。不要解释。",
+    "expected": {
+      "contains": [
+        "def greet",
+        "return",
+        "hello"
+      ],
+      "code_only": true
+    }
+  },
+  {
+    "id": "math-en-1",
+    "category": "math",
+    "language": "en",
+    "difficulty": "easy",
+    "skill": "arithmetic",
+    "prompt": "A box has 7 red and 5 blue balls. How many balls are in the box? Give only the final number.",
+    "expected": {
+      "answer": "12",
+      "topic": "arithmetic"
+    }
+  },
+  {
+    "id": "math-zh-1",
+    "category": "math",
+    "language": "zh",
+    "difficulty": "easy",
+    "skill": "percentage",
+    "prompt": "一本书原价 80 元，打九折后价格是多少？只给出最终数字。",
+    "expected": {
+      "answer": "72",
+      "topic": "percentage"
+    }
+  },
+  {
+    "id": "math-en-2",
+    "category": "math",
+    "language": "en",
+    "difficulty": "easy",
+    "skill": "algebra",
+    "prompt": "Solve for x: 3x + 5 = 20. Give only the final number.",
+    "expected": {
+      "answer": "5",
+      "topic": "algebra"
+    }
+  },
+  {
+    "id": "math-zh-2",
+    "category": "math",
+    "language": "zh",
+    "difficulty": "easy",
+    "skill": "geometry",
+    "prompt": "一个长方形长 8、宽 3，面积是多少？只给最终数字。",
+    "expected": {
+      "answer": "24",
+      "topic": "geometry"
+    }
+  },
+  {
+    "id": "math-en-3",
+    "category": "math",
+    "language": "en",
+    "skill": "average",
+    "prompt": "The average of 4, 6, and 8 is what? Give only the number.",
+    "expected": {
+      "answer": "6",
+      "topic": "average"
+    },
+    "difficulty": "easy"
+  },
+  {
+    "id": "math-zh-3",
+    "category": "math",
+    "language": "zh",
+    "difficulty": "easy",
+    "skill": "ratio",
+    "prompt": "红球和蓝球数量比是 2:3，红球有 8 个，蓝球有多少个？只给数字。",
+    "expected": {
+      "answer": "12",
+      "topic": "ratio"
+    }
+  },
+  {
+    "id": "math-en-4",
+    "category": "math",
+    "language": "en",
+    "difficulty": "easy",
+    "skill": "word_problem",
+    "prompt": "A train travels 60 kilometers per hour for 2 hours. How far does it travel? Give only the number.",
+    "expected": {
+      "answer": "120",
+      "topic": "rate"
+    }
+  },
+  {
+    "id": "math-zh-4",
+    "category": "math",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "probability",
+    "prompt": "一个公平六面骰子掷出偶数的概率是多少？用最简分数表示。",
+    "expected": {
+      "answer": "1/2",
+      "topic": "probability"
+    }
+  },
+  {
+    "id": "math-en-5",
+    "category": "math",
+    "language": "en",
+    "difficulty": "medium",
+    "skill": "algebra",
+    "prompt": "If 2x - 7 = 9, what is x? Give only the final number.",
+    "expected": {
+      "answer": "8",
+      "topic": "algebra"
+    }
+  },
+  {
+    "id": "math-zh-5",
+    "category": "math",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "sequence",
+    "prompt": "数列 3、6、9、12 的下一个数是多少？只给数字。",
+    "expected": {
+      "answer": "15",
+      "topic": "sequence"
+    }
+  },
+  {
+    "id": "math-en-6",
+    "category": "math",
+    "language": "en",
+    "difficulty": "medium",
+    "skill": "percentage",
+    "prompt": "A $50 item is discounted by 20%. What is the sale price? Give only the number.",
+    "expected": {
+      "answer": "40",
+      "topic": "percentage"
+    }
+  },
+  {
+    "id": "math-zh-6",
+    "category": "math",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "system",
+    "prompt": "两个数的和是 18，差是 4，较大的数是多少？只给数字。",
+    "expected": {
+      "answer": "11",
+      "topic": "algebra"
+    }
+  },
+  {
+    "id": "code-en-1",
+    "category": "coding",
+    "language": "en",
+    "difficulty": "easy",
+    "skill": "function",
+    "prompt": "Write only Python code for def add(a, b): that returns the sum of a and b.",
+    "expected": {
+      "entry": "add",
+      "tests": "assert add(2, 3) == 5\nassert add(-1, 1) == 0"
+    }
+  },
+  {
+    "id": "code-zh-1",
+    "category": "coding",
+    "language": "zh",
+    "difficulty": "easy",
+    "skill": "boolean",
+    "prompt": "只输出 Python 代码：实现函数 is_even(n)，n 为偶数时返回 True，否则返回 False。",
+    "expected": {
+      "entry": "is_even",
+      "tests": "assert is_even(4) is True\nassert is_even(3) is False"
+    }
+  },
+  {
+    "id": "code-en-2",
+    "category": "coding",
+    "language": "en",
+    "difficulty": "easy",
+    "skill": "string",
+    "prompt": "Write only Python code for def reverse_words(text): that reverses word order, separating words with one space.",
+    "expected": {
+      "entry": "reverse_words",
+      "tests": "assert reverse_words('one two three') == 'three two one'\nassert reverse_words('hello') == 'hello'"
+    }
+  },
+  {
+    "id": "code-zh-2",
+    "category": "coding",
+    "language": "zh",
+    "difficulty": "easy",
+    "skill": "list",
+    "prompt": "只输出 Python 代码：实现函数 first_item(items)，返回列表第一个元素；空列表返回 None。",
+    "expected": {
+      "entry": "first_item",
+      "tests": "assert first_item([4, 5]) == 4\nassert first_item([]) is None"
+    }
+  },
+  {
+    "id": "code-en-3",
+    "category": "coding",
+    "language": "en",
+    "difficulty": "medium",
+    "skill": "counting",
+    "prompt": "Write only Python code for def count_vowels(text): that returns the number of a, e, i, o, u letters, case-insensitive.",
+    "expected": {
+      "entry": "count_vowels",
+      "tests": "assert count_vowels('Hello') == 2\nassert count_vowels('AEIOU') == 5"
+    }
+  },
+  {
+    "id": "code-zh-3",
+    "category": "coding",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "deduplication",
+    "prompt": "只输出 Python 代码：实现函数 unique_items(items)，按首次出现顺序去重并返回新列表。",
+    "expected": {
+      "entry": "unique_items",
+      "tests": "assert unique_items([3, 1, 3, 2, 1]) == [3, 1, 2]\nassert unique_items([]) == []"
+    }
+  },
+  {
+    "id": "code-en-4",
+    "category": "coding",
+    "language": "en",
+    "skill": "sorting",
+    "prompt": "Write only Python code for def sort_numbers(nums): that returns a new ascending sorted list without changing the input.",
+    "expected": {
+      "entry": "sort_numbers",
+      "tests": "x=[3,1,2]; assert sort_numbers(x)==[1,2,3]; assert x==[3,1,2]"
+    },
+    "difficulty": "easy"
+  },
+  {
+    "id": "code-zh-4",
+    "category": "coding",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "validation",
+    "prompt": "只输出 Python 代码：实现函数 is_palindrome(text)，忽略大小写和空格后判断是否为回文。",
+    "expected": {
+      "entry": "is_palindrome",
+      "tests": "assert is_palindrome('Never odd or even') is True\nassert is_palindrome('hello') is False"
+    }
+  },
+  {
+    "id": "code-en-5",
+    "category": "coding",
+    "language": "en",
+    "difficulty": "medium",
+    "skill": "repair",
+    "prompt": "Fix this Python function and output only the corrected code: def max_value(nums): return min(nums). It should return the largest item.",
+    "expected": {
+      "entry": "max_value",
+      "tests": "assert max_value([2,9,4]) == 9\nassert max_value([-3,-1]) == -1"
+    }
+  },
+  {
+    "id": "code-zh-5",
+    "category": "coding",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "dictionary",
+    "prompt": "只输出 Python 代码：实现函数 word_lengths(words)，返回字典，键为单词，值为单词长度。",
+    "expected": {
+      "entry": "word_lengths",
+      "tests": "assert word_lengths(['cat','lion']) == {'cat':3,'lion':4}"
+    }
+  },
+  {
+    "id": "code-en-6",
+    "category": "coding",
+    "language": "en",
+    "difficulty": "medium",
+    "skill": "recursion",
+    "prompt": "Write only Python code for def factorial(n) returning n factorial for nonnegative integers.",
+    "expected": {
+      "entry": "factorial",
+      "tests": "assert factorial(0)==1\nassert factorial(5)==120"
+    }
+  },
+  {
+    "id": "code-zh-6",
+    "category": "coding",
+    "language": "zh",
+    "difficulty": "medium",
+    "skill": "matrix",
+    "prompt": "只输出 Python 代码：实现函数 transpose(matrix)，返回二维列表的转置结果。",
+    "expected": {
+      "entry": "transpose",
+      "tests": "assert transpose([[1,2,3],[4,5,6]]) == [[1,4],[2,5],[3,6]]"
+    }
+  },
+  {
+    "id": "perf-en-1",
+    "category": "performance",
+    "language": "en",
+    "difficulty": "easy",
+    "skill": "short_output",
+    "prompt": "State the word gravity exactly once.",
+    "expected": {
+      "contains": [
+        "gravity"
+      ],
+      "max_chars": 20
+    }
+  },
+  {
+    "id": "perf-zh-1",
+    "category": "performance",
+    "language": "zh",
+    "difficulty": "easy",
+    "skill": "short_output",
+    "prompt": "只输出两个字：重力。",
+    "expected": {
+      "regex": "^重力$"
+    }
+  }
+]

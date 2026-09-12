@@ -1,0 +1,10 @@
+services:
+  gravitybench:
+    build: .
+    ports: ["8000:8000"]
+    volumes:
+      - ./models:/models:ro
+      - ./reports:/app/reports
+      - ./gravity_bench.db:/app/gravity_bench.db
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}

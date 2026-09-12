@@ -1,0 +1,88 @@
+from __future__ import annotations
+
+import ast
+import json
+import math
+import re
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+from typing import Any
+from fractions import Fraction
+
+from backend.benchmarks.tasks import BenchmarkTask
+
+
+def _strip_code(text: str) -> str:
+    matched = re.search(r"```(?:python)?\s*(.*?)```", text, re.S | re.I)
+    return matched.group(1).strip() if matched else text.strip()
+
+
+def _number(text: str) -> str | None:
+    boxed = re.findall(r"(?:\\boxed\{|答案[:：]?\s*)([-+]?\d+(?:\.\d+)?)", text)
+    values = boxed or re.findall(r"[-+]?\d+(?:\.\d+)?(?:/\d+(?:\.\d+)?)?", text)
+    return values[-1] if values else None
+
+
+def _score_instruction(output: str, expected: dict[str, Any]) -> tuple[float, dict[str, Any]]:
+    checks: list[bool] = []
+    if "json_schema" in expected:
+        try:
+            parsed = json.loads(output)
+            def valid_type(value: Any, typ: str) -> bool:
+                if typ == "string": return isinstance(value, str)
+                if typ == "integer": return isinstance(value, int) and not isinstance(value, bool)
+                if typ == "boolean": return isinstance(value, bool)
+                if typ == "number": return isinstance(value, (int, float)) and not isinstance(value, bool)
+                return False
+            checks.extend(valid_type(parsed.get(k), typ) for k, typ in expected["json_schema"].items())
+        except (json.JSONDecodeError, AttributeError): checks.append(False)
+    if "line_count" in expected: checks.append(len([x for x in output.splitlines() if x.strip()]) == expected["line_count"])
+    if expected.get("lowercase"): checks.append(output == output.lower())
+    if "regex" in expected: checks.append(bool(re.fullmatch(expected["regex"], output.strip())))
+    if "contains" in expected: checks.extend(item in output for item in expected["contains"])
+    if "forbid" in expected: checks.extend(item not in output for item in expected["forbid"])
+    if "max_chars" in expected: checks.append(len(output.strip()) <= expected["max_chars"])
+    if "exact_lines" in expected: checks.append([x.strip() for x in output.splitlines() if x.strip()] == expected["exact_lines"])
+    if "prefix" in expected: checks.extend(x.startswith(expected["prefix"]) for x in output.splitlines() if x.strip())
+    if "json_keys" in expected:
+        try: checks.extend(key in json.loads(output) for key in expected["json_keys"])
+        except (json.JSONDecodeError, TypeError): checks.append(False)
+    if "json_array" in expected:
+        try:
+            parsed = json.loads(output); spec = expected["json_array"]
+            checks.append(isinstance(parsed, list) and len(parsed) == spec["length"])
+            for item in parsed: checks.extend(isinstance(item.get(k), str if typ == "string" else int) for k, typ in spec["fields"].items())
+        except (json.JSONDecodeError, TypeError, AttributeError): checks.append(False)
+    return (sum(checks) / len(checks) if checks else 0), {"checks": checks}
+
+
+def _score_math(output: str, expected: dict[str, Any]) -> tuple[float, dict[str, Any]]:
+    found, answer = _number(output), expected["answer"]
+    try:
+        correct = found is not None and math.isclose(float(Fraction(found)), float(Fraction(answer)), rel_tol=1e-9, abs_tol=1e-9)
+    except (ValueError, ZeroDivisionError): correct = found == answer
+    return float(correct), {"found": found, "answer": answer, "topic": expected.get("topic")}
+
+
+def _score_code(output: str, expected: dict[str, Any]) -> tuple[float, dict[str, Any]]:
+    code = _strip_code(output)
+    try: ast.parse(code)
+    except SyntaxError as exc: return 0, {"kind": "syntax_error", "message": str(exc)}
+    # Docker is the default isolation boundary. Refuse host execution for model-generated code.
+    with tempfile.TemporaryDirectory(prefix="gravitybench-") as tmp:
+        path = Path(tmp) / "solution.py"; path.write_text(code + "\n" + expected["tests"], encoding="utf-8")
+        try:
+            result = subprocess.run(["docker", "run", "--rm", "--network=none", "--cpus=0.5", "--memory=256m", "--pids-limit=64", "-v", f"{tmp}:/work:ro", "python:3.12-slim", "python", "/work/solution.py"], text=True, capture_output=True, timeout=8)
+        except FileNotFoundError: return 0, {"kind": "sandbox_unavailable", "message": "Docker is required for coding evaluation"}
+        except subprocess.TimeoutExpired: return 0, {"kind": "timeout"}
+    if result.returncode == 0: return 1, {"kind": "passed"}
+    return 0, {"kind": "test_failure", "stderr": result.stderr[-1000:]}
+
+
+def score(task: BenchmarkTask, output: str) -> tuple[float, dict[str, Any]]:
+    if task.category in {"instruction", "performance"}: return _score_instruction(output, task.expected)
+    if task.category == "math": return _score_math(output, task.expected)
+    if task.category == "coding": return _score_code(output, task.expected)
+    return 0, {"kind": "unknown_category"}
