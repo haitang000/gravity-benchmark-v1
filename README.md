@@ -23,7 +23,7 @@ uvicorn backend.main:app --host 127.0.0.1 --port 8000
 
 代码评测使用 Docker 的无网络、限 CPU/内存容器。首次使用前准备 `python:3.12-slim` 镜像；模型代码不会在宿主机解释器中执行。若部署到 Linux GPU 主机，可把 `llama-cpp-python` 按 CUDA 或 ROCm 选项重新构建，并在模型配置中设置 `n_gpu_layers`；Transformers 使用 PyTorch 的 CUDA/ROCm 检测。
 
-API endpoints：`/api/models`、`/api/models/{id}/health`、`/api/runs`、`/api/runs/{id}`、`/api/runs/{id}/export/{json|csv|html}`。OpenAPI 文档在 `/docs`。
+API endpoints：`/api/models`、`/api/models/{id}`（PUT 编辑）、`/api/models/{id}/health`、`/api/runs`、`/api/runs/{id}`、`/api/runs/{id}/export/{json|csv|html}`。OpenAPI 文档在 `/docs`。
 
 本地模型安装可选依赖：`pip install -e ".[local]"`。`llama-cpp-python` 的 CUDA/ROCm wheel 或源码构建请按其官方安装方式完成，GravityBench 会在健康检查时显示编译与设备状态。
 

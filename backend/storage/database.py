@@ -68,6 +68,18 @@ def list_profiles() -> list[ModelProfile]:
 def get_profile(profile_id: int) -> ModelProfile | None:
     with session() as db: return db.get(ModelProfile, profile_id)
 
+def update_profile(profile_id: int, data: ModelProfileIn) -> ModelProfile | None:
+    with session() as db:
+        item = db.get(ModelProfile, profile_id)
+        if not item: return None
+        config = {**(item.config or {}), **data.config} if item.backend == data.backend else dict(data.config)
+        if data.backend == BackendType.OPENAI:
+            key = data.config.get("api_key") or (item.config or {}).get("api_key")
+            if key: config["api_key"] = key
+            else: config.pop("api_key", None)
+        item.name, item.backend, item.model_ref, item.config = data.name, data.backend, data.model_ref, config
+        db.add(item); db.commit(); db.refresh(item); return item
+
 def create_run(suite: str, settings: dict, hardware: dict, total: int) -> BenchmarkRun:
     with session() as db:
         item = BenchmarkRun(suite=suite, settings=settings, hardware=hardware, total_tasks=total); db.add(item); db.commit(); db.refresh(item); return item

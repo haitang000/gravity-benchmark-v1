@@ -13,7 +13,7 @@ from backend.execution.runner import cancel, start
 from backend.hardware.detect import detect_hardware
 from backend.reports import export_report, report
 from backend.schemas import ModelProfileIn, RunProgress, RunRequest
-from backend.storage.database import create_profile, create_run, get_profile, get_run, init_db, list_profiles, list_runs, results_for_run
+from backend.storage.database import create_profile, create_run, get_profile, get_run, init_db, list_profiles, list_runs, results_for_run, update_profile
 
 app = FastAPI(title="GravityBench", version="0.1.0")
 ROOT = Path(__file__).resolve().parents[1]
@@ -38,6 +38,12 @@ def _public_model(item):
 
 @app.post("/api/models")
 def add_model(data: ModelProfileIn): return _public_model(create_profile(data))
+
+@app.put("/api/models/{model_id}")
+def edit_model(model_id: int, data: ModelProfileIn):
+    item = update_profile(model_id, data)
+    if not item: raise HTTPException(404, "Model not found")
+    return _public_model(item)
 
 @app.post("/api/models/{model_id}/health")
 async def model_health(model_id: int):
