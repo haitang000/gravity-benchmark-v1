@@ -87,8 +87,18 @@ def create_run(suite: str, settings: dict, hardware: dict, total: int) -> Benchm
 def get_run(run_id: int) -> BenchmarkRun | None:
     with session() as db: return db.get(BenchmarkRun, run_id)
 
-def list_runs() -> list[BenchmarkRun]:
-    with session() as db: return list(db.exec(select(BenchmarkRun).order_by(BenchmarkRun.id.desc())))
+def list_runs(limit: int | None = None, offset: int = 0) -> list[BenchmarkRun]:
+    with session() as db:
+        query = select(BenchmarkRun).order_by(BenchmarkRun.id.desc()).offset(offset)
+        if limit is not None: query = query.limit(limit)
+        return list(db.exec(query))
+
+def delete_run(run_id: int) -> bool:
+    with session() as db:
+        item = db.get(BenchmarkRun, run_id)
+        if not item: return False
+        for row in db.exec(select(TaskResult).where(TaskResult.run_id == run_id)): db.delete(row)
+        db.delete(item); db.commit(); return True
 
 def update_run(run_id: int, **values: Any) -> None:
     with session() as db:

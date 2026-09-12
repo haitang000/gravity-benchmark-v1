@@ -13,9 +13,20 @@ from backend.storage.database import TaskResult, add_result, get_profile, get_ru
 
 jobs: dict[int, asyncio.Task] = {}
 streams: dict[int, dict[str, str]] = {}
+controls: dict[int, asyncio.Event] = {}
 
 def streaming_outputs(run_id: int) -> dict[str, str]:
     return dict(streams.get(run_id, {}))
+
+def pause(run_id: int) -> bool:
+    event = controls.get(run_id)
+    if not event or not event.is_set(): return False
+    event.clear(); update_run(run_id, status=RunStatus.PAUSED); return True
+
+def resume(run_id: int) -> bool:
+    event = controls.get(run_id)
+    if not event or event.is_set(): return False
+    event.set(); update_run(run_id, status=RunStatus.RUNNING); return True
 
 def retry_kind(result: GenerationResult, value: float, details: dict[str, Any]) -> str | None:
     if result.error: return "error"
@@ -24,6 +35,7 @@ def retry_kind(result: GenerationResult, value: float, details: dict[str, Any]) 
 
 async def execute(run_id: int, model_ids: list[int], suite: str, languages: list[str], generation: GenerationConfig, counts: dict[str,int], seed: int, concurrency: int, retries: int = 0, repeats: int = 1, score_retries: int = 0) -> None:
     run = get_run(run_id); tasks = load_tasks(suite, languages, seed, counts); update_run(run_id, status=RunStatus.RUNNING, total_tasks=len(tasks) * len(model_ids) * repeats, settings={"model_ids": model_ids, "suite": suite, "languages": languages, "generation": generation.model_dump(), "seed": seed, "retries": retries, "score_retries": score_retries, "repeats": repeats, "dataset_hash": dataset_hash()})
+    gate = controls[run_id] = asyncio.Event(); gate.set()
     total_done = total_failed = 0
     try:
         for model_id in model_ids:
@@ -37,6 +49,7 @@ async def execute(run_id: int, model_ids: list[int], suite: str, languages: list
                 async def one(task, repeat):
                     nonlocal total_done, total_failed
                     async with sem:
+                        await gate.wait()
                         update_run(run_id, current_task=f"{profile.name}: {task.id}")
                         key = f"{model_id}:{task.id}"
                         async def on_text(text: str): streams.setdefault(run_id, {})[key] = text
@@ -64,11 +77,14 @@ async def execute(run_id: int, model_ids: list[int], suite: str, languages: list
     except Exception as exc:
         update_run(run_id, status=RunStatus.FAILED, error=str(exc), finished_at=datetime.utcnow())
     finally:
-        streams.pop(run_id, None)
+        streams.pop(run_id, None); controls.pop(run_id, None)
 
 def start(*args: Any) -> int:
     run_id = args[0]; jobs[run_id] = asyncio.create_task(execute(*args)); return run_id
 
 def cancel(run_id: int) -> bool:
     task = jobs.get(run_id)
-    return bool(task and not task.done() and task.cancel())
+    if not task or task.done(): return False
+    event = controls.get(run_id)
+    if event: event.set()
+    return bool(task.cancel())

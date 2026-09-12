@@ -34,13 +34,32 @@ class LlamaCppAdapter:
         started = time.perf_counter()
         try:
             llm = await asyncio.to_thread(self._load)
-            output = await asyncio.to_thread(llm.create_chat_completion, messages=[m.model_dump() for m in messages], temperature=generation.temperature, top_p=generation.top_p, max_tokens=generation.max_tokens, stop=generation.stop)
+            kwargs: dict[str, Any] = {"messages": [m.model_dump() for m in messages], "temperature": generation.temperature, "top_p": generation.top_p, "max_tokens": generation.max_tokens, "stop": generation.stop}
+            engine = {"engine": "llama.cpp", "n_gpu_layers": self.config.get("n_gpu_layers", 0)}
+            if on_text is None:
+                output = await asyncio.to_thread(llm.create_chat_completion, **kwargs)
+                latency = (time.perf_counter() - started) * 1000
+                text = output["choices"][0]["message"]["content"] or ""
+                usage = output.get("usage", {})
+                generated = usage.get("completion_tokens", max(1, len(text.split())))
+                total = usage.get("total_tokens", generated)
+                return GenerationResult(text=text, input_tokens=usage.get("prompt_tokens"), output_tokens=generated, latency_ms=latency, generation_tokens_per_second=generation_speed(generated, latency), total_tokens_per_second=total / (latency / 1000) if latency else None, backend_metadata=engine | {"stream": False})
+            loop = asyncio.get_running_loop()
+            def stream() -> tuple[str, float | None, dict[str, Any]]:
+                parts: list[str] = []; ttft = None; usage: dict[str, Any] = {}
+                for chunk in llm.create_chat_completion(**kwargs, stream=True):
+                    if chunk.get("usage"): usage = chunk["usage"]
+                    delta = (chunk.get("choices") or [{}])[0].get("delta", {}).get("content") or ""
+                    if not delta: continue
+                    if ttft is None: ttft = (time.perf_counter() - started) * 1000
+                    parts.append(delta)
+                    asyncio.run_coroutine_threadsafe(on_text("".join(parts)), loop).result()
+                return "".join(parts), ttft, usage
+            text, ttft, usage = await asyncio.to_thread(stream)
             latency = (time.perf_counter() - started) * 1000
-            text = output["choices"][0]["message"]["content"] or ""
-            usage = output.get("usage", {})
             generated = usage.get("completion_tokens", max(1, len(text.split())))
-            total = usage.get("total_tokens", generated)
-            return GenerationResult(text=text, input_tokens=usage.get("prompt_tokens"), output_tokens=generated, latency_ms=latency, generation_tokens_per_second=generation_speed(generated, latency), total_tokens_per_second=total / (latency / 1000) if latency else None, backend_metadata={"engine": "llama.cpp", "n_gpu_layers": self.config.get("n_gpu_layers", 0)})
+            total = usage.get("total_tokens", usage.get("prompt_tokens", 0) + generated)
+            return GenerationResult(text=text, input_tokens=usage.get("prompt_tokens"), output_tokens=generated, ttft_ms=ttft, latency_ms=latency, generation_tokens_per_second=generation_speed(generated, latency, ttft), total_tokens_per_second=total / (latency / 1000) if latency else None, backend_metadata=engine | {"stream": True})
         except Exception as exc:
             return GenerationResult(error=str(exc), latency_ms=(time.perf_counter() - started) * 1000)
 
@@ -78,15 +97,47 @@ class TransformersAdapter:
             if self._model is None: await asyncio.to_thread(self._load)
             import torch
             prompt = self._tokenizer.apply_chat_template([m.model_dump() for m in messages], tokenize=False, add_generation_prompt=True) if getattr(self._tokenizer, "chat_template", None) else _prompt(messages)
-            def infer() -> tuple[str, int, int]:
-                inputs = self._tokenizer(prompt, return_tensors="pt").to(self._model.device)
-                with torch.inference_mode():
-                    ids = self._model.generate(**inputs, max_new_tokens=generation.max_tokens, do_sample=generation.temperature > 0, temperature=max(generation.temperature, 1e-5), top_p=generation.top_p, pad_token_id=self._tokenizer.eos_token_id)
-                new_ids = ids[0][inputs.input_ids.shape[1]:]
-                return self._tokenizer.decode(new_ids, skip_special_tokens=True), int(inputs.input_ids.shape[1]), int(new_ids.shape[0])
-            text, input_tokens, output_tokens = await asyncio.to_thread(infer)
+            engine = {"engine": "transformers", "device": self._device}
+            sample_kwargs: dict[str, Any] = {"max_new_tokens": generation.max_tokens, "do_sample": generation.temperature > 0, "temperature": max(generation.temperature, 1e-5), "top_p": generation.top_p, "pad_token_id": self._tokenizer.eos_token_id}
+            if on_text is None:
+                def infer() -> tuple[str, int, int]:
+                    inputs = self._tokenizer(prompt, return_tensors="pt").to(self._model.device)
+                    with torch.inference_mode():
+                        ids = self._model.generate(**inputs, **sample_kwargs)
+                    new_ids = ids[0][inputs.input_ids.shape[1]:]
+                    return self._tokenizer.decode(new_ids, skip_special_tokens=True), int(inputs.input_ids.shape[1]), int(new_ids.shape[0])
+                text, input_tokens, output_tokens = await asyncio.to_thread(infer)
+                latency = (time.perf_counter() - started) * 1000
+                return GenerationResult(text=text, input_tokens=input_tokens, output_tokens=output_tokens, latency_ms=latency, generation_tokens_per_second=generation_speed(output_tokens, latency), total_tokens_per_second=(input_tokens + output_tokens) / (latency / 1000) if latency else None, backend_metadata=engine | {"stream": False})
+            from threading import Thread
+            from transformers import TextIteratorStreamer
+            streamer = TextIteratorStreamer(self._tokenizer, skip_prompt=True, skip_special_tokens=True)
+            loop = asyncio.get_running_loop()
+            state: dict[str, Any] = {}
+            def run() -> None:
+                try:
+                    inputs = self._tokenizer(prompt, return_tensors="pt").to(self._model.device)
+                    state["input_tokens"] = int(inputs.input_ids.shape[1])
+                    with torch.inference_mode():
+                        state["ids"] = self._model.generate(**inputs, **sample_kwargs, streamer=streamer)
+                except Exception as exc:
+                    state["error"] = exc; streamer.end()
+            thread = Thread(target=run); thread.start()
+            def consume() -> tuple[str, float | None]:
+                parts: list[str] = []; ttft = None
+                for piece in streamer:
+                    if not piece: continue
+                    if ttft is None: ttft = (time.perf_counter() - started) * 1000
+                    parts.append(piece)
+                    asyncio.run_coroutine_threadsafe(on_text("".join(parts)), loop).result()
+                thread.join()
+                if "error" in state: raise state["error"]
+                return "".join(parts), ttft
+            text, ttft = await asyncio.to_thread(consume)
             latency = (time.perf_counter() - started) * 1000
-            return GenerationResult(text=text, input_tokens=input_tokens, output_tokens=output_tokens, latency_ms=latency, generation_tokens_per_second=generation_speed(output_tokens, latency), total_tokens_per_second=(input_tokens + output_tokens) / (latency / 1000) if latency else None, backend_metadata={"engine": "transformers", "device": self._device})
+            input_tokens = int(state.get("input_tokens", 0))
+            ids = state.get("ids"); output_tokens = int(ids.shape[1]) - input_tokens if ids is not None else max(1, len(text.split()))
+            return GenerationResult(text=text, input_tokens=input_tokens, output_tokens=output_tokens, ttft_ms=ttft, latency_ms=latency, generation_tokens_per_second=generation_speed(output_tokens, latency, ttft), total_tokens_per_second=(input_tokens + output_tokens) / (latency / 1000) if latency else None, backend_metadata=engine | {"stream": True})
         except Exception as exc:
             return GenerationResult(error=str(exc), latency_ms=(time.perf_counter() - started) * 1000)
 

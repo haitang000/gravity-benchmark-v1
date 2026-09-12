@@ -1,3 +1,6 @@
+import asyncio
+
+import pytest
 from sqlalchemy.pool import StaticPool
 from sqlmodel import SQLModel, create_engine
 
@@ -52,17 +55,34 @@ class StreamingAdapter:
     async def close(self): return None
 
 
-def math_task(): return BenchmarkTask("math-1", "math", "en", "easy", "1+11?", {"answer": "12"})
+class SelfPausingAdapter:
+    def __init__(self):
+        self.calls, self.run_id = 0, 0
+    async def health_check(self): return HealthResult(ok=True, message="ok")
+    async def generate(self, messages, generation, on_text=None):
+        self.calls += 1
+        if self.calls == 1: runner.pause(self.run_id)
+        return GenerationResult(text="The answer is 12.")
+    async def close(self): return None
 
-def setup(monkeypatch, adapter):
+
+def math_task(task_id="math-1"): return BenchmarkTask(task_id, "math", "en", "easy", "1+11?", {"answer": "12"})
+
+def setup(monkeypatch, adapter, tasks=1):
     engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
     monkeypatch.setattr(database, "engine", engine)
     SQLModel.metadata.create_all(engine)
     profile = database.create_profile(ModelProfileIn(name="m", backend="openai_compatible", model_ref="m", config={"base_url": "http://h/v1"}))
-    run = database.create_run("quick", {}, {}, 1)
+    run = database.create_run("quick", {}, {}, tasks)
     monkeypatch.setattr(runner, "create_adapter", lambda *args: adapter)
-    monkeypatch.setattr(runner, "load_tasks", lambda *args: [math_task()])
+    monkeypatch.setattr(runner, "load_tasks", lambda *args: [math_task(f"math-{i}") for i in range(tasks)])
     return profile, run
+
+async def wait_for(condition, timeout=2.0):
+    for _ in range(int(timeout / 0.01)):
+        if condition(): return
+        await asyncio.sleep(0.01)
+    raise AssertionError("condition not met in time")
 
 def test_retry_kind_rules():
     assert runner.retry_kind(GenerationResult(error="x"), 0, {}) == "error"
@@ -123,7 +143,7 @@ async def test_execute_reports_streaming_outputs(monkeypatch):
     profile, run = setup(monkeypatch, fake)
     fake.run_id = run.id
     await runner.execute(run.id, [profile.id], "quick", ["en"], GenerationConfig(), {}, 42, 1, 0)
-    assert fake.seen == {f"{profile.id}:math-1": "The answer is 12."}
+    assert fake.seen == {f"{profile.id}:math-0": "The answer is 12."}
     assert runner.streaming_outputs(run.id) == {}
 
 async def test_execute_repeats_suite_and_averages(monkeypatch):
@@ -136,3 +156,30 @@ async def test_execute_repeats_suite_and_averages(monkeypatch):
     assert {row.metrics["repeat"] for row in rows} == {1, 2}
     assert database.get_run(run.id).settings["repeats"] == 2
     assert summary["total"]["score"] == 0.5 and summary["total"]["pass_rate"] == 0.5
+
+def test_pause_resume_require_active_run():
+    assert runner.pause(999) is False and runner.resume(999) is False
+
+async def test_execute_pause_and_resume(monkeypatch):
+    fake = SelfPausingAdapter()
+    profile, run = setup(monkeypatch, fake, tasks=2)
+    fake.run_id = run.id
+    job = asyncio.create_task(runner.execute(run.id, [profile.id], "quick", ["en"], GenerationConfig(), {}, 42, 1))
+    await wait_for(lambda: database.get_run(run.id).status == RunStatus.PAUSED)
+    await asyncio.sleep(0.05)
+    assert fake.calls == 1
+    assert runner.resume(run.id) is True
+    await job
+    assert fake.calls == 2
+    assert database.get_run(run.id).status == RunStatus.COMPLETED
+
+async def test_cancel_paused_run(monkeypatch):
+    fake = SelfPausingAdapter()
+    profile, run = setup(monkeypatch, fake, tasks=2)
+    fake.run_id = run.id
+    runner.start(run.id, [profile.id], "quick", ["en"], GenerationConfig(), {}, 42, 1)
+    job = runner.jobs[run.id]
+    await wait_for(lambda: database.get_run(run.id).status == RunStatus.PAUSED)
+    assert runner.cancel(run.id) is True
+    with pytest.raises(asyncio.CancelledError): await job
+    assert database.get_run(run.id).status == RunStatus.CANCELLED

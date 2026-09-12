@@ -4,17 +4,17 @@ import asyncio
 from collections import Counter
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend.adapters.factory import create_adapter
 from backend.benchmarks.tasks import load_tasks
-from backend.execution.runner import cancel, start, streaming_outputs
+from backend.execution.runner import cancel, pause, resume, start, streaming_outputs
 from backend.hardware.detect import detect_hardware
-from backend.reports import export_report, report
-from backend.schemas import ModelProfileIn, RunProgress, RunRequest
-from backend.storage.database import create_profile, create_run, get_profile, get_run, init_db, list_profiles, list_runs, results_for_run, update_profile
+from backend.reports import export_report, invalidate, report
+from backend.schemas import ModelProfileIn, RunProgress, RunRequest, RunStatus
+from backend.storage.database import create_profile, create_run, delete_run, get_profile, get_run, init_db, list_profiles, list_runs, update_profile
 
 app = FastAPI(title="GravityBench", version="0.1.0")
 ROOT = Path(__file__).resolve().parents[1]
@@ -66,16 +66,40 @@ async def run_benchmark(request: RunRequest):
     return item
 
 @app.get("/api/runs")
-def runs(): return list_runs()
+def runs(limit: int = Query(default=50, ge=1, le=500), offset: int = Query(default=0, ge=0)): return list_runs(limit, offset)
 
 @app.get("/api/runs/{run_id}")
-def run_detail(run_id: int):
+def run_detail(run_id: int, result_limit: int = Query(default=200, ge=0, le=5000)):
     item = get_run(run_id)
     if not item: raise HTTPException(404, "Run not found")
-    return {"run": item, "results": results_for_run(run_id), "report": report(item), "streaming": streaming_outputs(run_id)}
+    data = report(item)
+    rows = data["results"][-result_limit:] if result_limit else []
+    return {"run": item, "results": rows, "report": report(item, include_results=False), "streaming": streaming_outputs(run_id)}
 
 @app.post("/api/runs/{run_id}/cancel")
-def cancel_run(run_id: int): return {"cancelled": cancel(run_id)}
+def cancel_run(run_id: int):
+    if not get_run(run_id): raise HTTPException(404, "Run not found")
+    return {"cancelled": cancel(run_id)}
+
+@app.post("/api/runs/{run_id}/pause")
+def pause_run(run_id: int):
+    if not get_run(run_id): raise HTTPException(404, "Run not found")
+    if not pause(run_id): raise HTTPException(409, "Run is not running")
+    return {"paused": True}
+
+@app.post("/api/runs/{run_id}/resume")
+def resume_run(run_id: int):
+    if not get_run(run_id): raise HTTPException(404, "Run not found")
+    if not resume(run_id): raise HTTPException(409, "Run is not paused")
+    return {"resumed": True}
+
+@app.delete("/api/runs/{run_id}")
+def remove_run(run_id: int):
+    item = get_run(run_id)
+    if not item: raise HTTPException(404, "Run not found")
+    if item.status in {RunStatus.RUNNING, RunStatus.PAUSED}: raise HTTPException(409, "Run is active")
+    delete_run(run_id); invalidate(run_id)
+    return {"deleted": True}
 
 @app.get("/api/runs/{run_id}/export/{fmt}")
 def export_run(run_id: int, fmt: str):

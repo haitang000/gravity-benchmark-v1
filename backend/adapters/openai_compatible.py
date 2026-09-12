@@ -48,42 +48,52 @@ class OpenAICompatibleAdapter:
         except httpx.HTTPError as exc:
             return HealthResult(ok=False, message=str(exc), hardware=detect_hardware())
 
+    async def _stream(self, payload: dict[str, Any], on_text: OnText, started: float, retries: int) -> GenerationResult:
+        parts: list[str] = []; ttft = None; usage = {}
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            async with client.stream("POST", self.chat_url, json=payload, headers=self._headers()) as response:
+                response.raise_for_status()
+                async for line in response.aiter_lines():
+                    if not line.startswith("data:"): continue
+                    data = line[5:].strip()
+                    if data == "[DONE]": break
+                    chunk = json.loads(data)
+                    if chunk.get("usage"): usage = chunk["usage"]
+                    delta = (chunk.get("choices") or [{}])[0].get("delta", {}).get("content") or ""
+                    if not delta: continue
+                    if ttft is None: ttft = (time.perf_counter() - started) * 1000
+                    parts.append(delta)
+                    await on_text("".join(parts))
+        elapsed = (time.perf_counter() - started) * 1000
+        text = "".join(parts)
+        output = usage.get("completion_tokens", max(1, len(text.split())))
+        total = usage.get("total_tokens", usage.get("prompt_tokens", 0) + output)
+        return GenerationResult(text=text, input_tokens=usage.get("prompt_tokens"), output_tokens=output, ttft_ms=ttft, latency_ms=elapsed, generation_tokens_per_second=generation_speed(output, elapsed, ttft), total_tokens_per_second=total / (elapsed / 1000) if elapsed else None, retries=retries, backend_metadata={"base_url": self.base_url, "stream": True})
+
     async def generate(self, messages: list[Message], generation: GenerationConfig, on_text: OnText | None = None) -> GenerationResult:
         payload = {"model": self.model_ref, "messages": [m.model_dump() for m in messages], **generation.model_dump(exclude_none=True)}
-        if on_text is not None: payload["stream"] = True
+        stream = on_text is not None
+        if stream: payload["stream"] = True
         started, retries = time.perf_counter(), 0
         for attempt in range(self.retries + 1):
             try:
+                if stream:
+                    try:
+                        return await self._stream(payload, on_text, started, retries)
+                    except httpx.HTTPStatusError as exc:
+                        if exc.response.status_code != 400: raise
+                        stream = False; payload.pop("stream", None)
                 async with httpx.AsyncClient(timeout=self.timeout) as client:
-                    if on_text is None:
-                        response = await client.post(self.chat_url, json=payload, headers=self._headers())
-                        response.raise_for_status()
-                        data = response.json()
-                        elapsed = (time.perf_counter() - started) * 1000
-                        text = data["choices"][0]["message"]["content"] or ""
-                        usage = data.get("usage", {})
-                        output = usage.get("completion_tokens", max(1, len(text.split())))
-                        total = usage.get("total_tokens", usage.get("prompt_tokens", 0) + output)
-                        return GenerationResult(text=text, input_tokens=usage.get("prompt_tokens"), output_tokens=output, latency_ms=elapsed, generation_tokens_per_second=generation_speed(output, elapsed), total_tokens_per_second=total / (elapsed / 1000) if elapsed else None, retries=retries, backend_metadata={"base_url": self.base_url})
-                    parts: list[str] = []; ttft = None; usage = {}
-                    async with client.stream("POST", self.chat_url, json=payload, headers=self._headers()) as response:
-                        response.raise_for_status()
-                        async for line in response.aiter_lines():
-                            if not line.startswith("data:"): continue
-                            data = line[5:].strip()
-                            if data == "[DONE]": break
-                            chunk = json.loads(data)
-                            if chunk.get("usage"): usage = chunk["usage"]
-                            delta = (chunk.get("choices") or [{}])[0].get("delta", {}).get("content") or ""
-                            if not delta: continue
-                            if ttft is None: ttft = (time.perf_counter() - started) * 1000
-                            parts.append(delta)
-                            await on_text("".join(parts))
-                    elapsed = (time.perf_counter() - started) * 1000
-                    text = "".join(parts)
-                    output = usage.get("completion_tokens", max(1, len(text.split())))
-                    total = usage.get("total_tokens", usage.get("prompt_tokens", 0) + output)
-                    return GenerationResult(text=text, input_tokens=usage.get("prompt_tokens"), output_tokens=output, ttft_ms=ttft, latency_ms=elapsed, generation_tokens_per_second=generation_speed(output, elapsed, ttft), total_tokens_per_second=total / (elapsed / 1000) if elapsed else None, retries=retries, backend_metadata={"base_url": self.base_url, "stream": True})
+                    response = await client.post(self.chat_url, json=payload, headers=self._headers())
+                    response.raise_for_status()
+                    data = response.json()
+                elapsed = (time.perf_counter() - started) * 1000
+                text = data["choices"][0]["message"]["content"] or ""
+                if on_text is not None and text: await on_text(text)
+                usage = data.get("usage", {})
+                output = usage.get("completion_tokens", max(1, len(text.split())))
+                total = usage.get("total_tokens", usage.get("prompt_tokens", 0) + output)
+                return GenerationResult(text=text, input_tokens=usage.get("prompt_tokens"), output_tokens=output, latency_ms=elapsed, generation_tokens_per_second=generation_speed(output, elapsed), total_tokens_per_second=total / (elapsed / 1000) if elapsed else None, retries=retries, backend_metadata={"base_url": self.base_url, "stream": False})
             except httpx.HTTPError as exc:
                 retries = attempt + 1
                 if attempt == self.retries:

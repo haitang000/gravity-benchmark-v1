@@ -64,3 +64,15 @@ async def test_streaming_parses_sse(respx_mock):
     assert result.generation_tokens_per_second and result.generation_tokens_per_second > 0
     assert seen == ["The ", "The answer is 12."]
     assert json.loads(route.calls.last.request.content)["stream"] is True
+
+async def test_streaming_falls_back_on_400(respx_mock):
+    body = {"choices": [{"message": {"content": "The answer is 12."}}], "usage": {"prompt_tokens": 7, "completion_tokens": 4, "total_tokens": 11}}
+    route = respx_mock.post("http://h/v1/chat/completions").mock(side_effect=[httpx.Response(400, json={"error": "stream unsupported"}), httpx.Response(200, json=body)])
+    seen = []
+    async def on_text(text): seen.append(text)
+    result = await adapter({"base_url": "http://h/v1"}).generate([Message(role="user", content="1+11?")], GenerationConfig(), on_text)
+    assert result.text == "The answer is 12." and not result.error
+    assert result.backend_metadata["stream"] is False and result.output_tokens == 4
+    assert seen == ["The answer is 12."]
+    assert json.loads(route.calls[0].request.content)["stream"] is True
+    assert "stream" not in json.loads(route.calls[1].request.content)

@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 from backend.metrics.aggregate import aggregate, token_total
 
-def row(category, score, passed=True, task_id="t", language="en", difficulty="easy", **metrics): return SimpleNamespace(category=category, score=score, passed=passed, task_id=task_id, language=language, difficulty=difficulty, metrics=metrics)
+def row(category, score, passed=True, task_id="t", language="en", difficulty="easy", model_id=1, **metrics): return SimpleNamespace(category=category, score=score, passed=passed, task_id=task_id, language=language, difficulty=difficulty, model_id=model_id, metrics=metrics)
 
 def test_token_total():
     assert token_total({"input_tokens": 10, "output_tokens": 20}) == 30
@@ -24,3 +24,11 @@ def test_avg_tokens_missing():
     assert summary["total"]["avg_input_tokens"] is None
     assert summary["total"]["avg_output_tokens"] is None
     assert summary["total"]["avg_total_tokens"] is None
+
+def test_aggregate_per_model():
+    summary = aggregate([row("math", 1, task_id="a", model_id=1), row("math", 0, passed=False, task_id="a", model_id=1), row("math", 1, task_id="b", model_id=2), row("coding", 1, task_id="c", model_id=2)])
+    assert summary["models"]["1"]["total"]["score"] == 0.5
+    assert summary["models"]["1"]["math"]["count"] == 2
+    assert "coding" not in summary["models"]["1"]
+    assert summary["models"]["2"]["total"]["score"] == 1
+    assert summary["models"]["2"]["coding"]["count"] == 1

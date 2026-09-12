@@ -4,7 +4,8 @@ from sqlmodel import SQLModel, create_engine
 
 import backend.storage.database as database
 from backend.main import app
-from backend.schemas import ModelProfileIn
+from backend.schemas import ModelProfileIn, RunStatus
+from backend.storage.database import TaskResult
 
 def fresh_db(monkeypatch):
     engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
@@ -48,3 +49,31 @@ def test_api_update_model(monkeypatch):
         assert body["name"] == "m2" and body["model_ref"] == "ref2" and body["config"]["base_url"] == "http://h/v2" and body["config"]["api_key"] == "••••••"
         missing = client.put("/api/models/999", json={"name": "x", "backend": "llama_cpp", "model_ref": "x", "config": {}})
         assert missing.status_code == 404
+
+def test_delete_run_removes_results(monkeypatch):
+    fresh_db(monkeypatch)
+    run = database.create_run("quick", {}, {}, 1)
+    database.add_result(TaskResult(run_id=run.id, model_id=1, task_id="t", category="math", language="en", difficulty="easy", prompt="p"))
+    assert database.delete_run(run.id) is True
+    assert database.results_for_run(run.id) == [] and database.get_run(run.id) is None
+    assert database.delete_run(run.id) is False
+
+def test_api_runs_pagination_and_delete(monkeypatch):
+    fresh_db(monkeypatch)
+    with TestClient(app) as client:
+        for _ in range(3): database.create_run("quick", {}, {}, 0)
+        assert len(client.get("/api/runs?limit=2").json()) == 2
+        assert len(client.get("/api/runs?limit=10&offset=2").json()) == 1
+        run_id = client.get("/api/runs").json()[0]["id"]
+        assert client.delete(f"/api/runs/{run_id}").status_code == 200
+        assert client.delete(f"/api/runs/{run_id}").status_code == 404
+
+def test_api_delete_active_run_rejected(monkeypatch):
+    fresh_db(monkeypatch)
+    with TestClient(app) as client:
+        run = database.create_run("quick", {}, {}, 1)
+        database.update_run(run.id, status=RunStatus.RUNNING)
+        assert client.delete(f"/api/runs/{run.id}").status_code == 409
+        assert client.post(f"/api/runs/{run.id}/pause").status_code == 409
+        assert client.post(f"/api/runs/{run.id}/resume").status_code == 409
+        assert client.delete("/api/runs/999").status_code == 404
