@@ -127,6 +127,10 @@ def _answer_tail(text: str, expected: dict[str, Any]) -> str:
 
 def _score_instruction(output: str, expected: dict[str, Any]) -> tuple[float, dict[str, Any]]:
     cleaned = _strip_reasoning(output)
+    # An empty response must never receive partial credit from vacuous
+    # constraints such as ``forbid``, ``max_chars`` or ``lowercase``.
+    if not cleaned:
+        return 0.0, {"kind": "empty_output", "checks": []}
     value, details = _instruction_checks(cleaned, expected)
     if value >= 1: return value, details
     tail = _answer_tail(cleaned, expected)
