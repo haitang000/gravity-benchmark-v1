@@ -14,9 +14,38 @@ from fractions import Fraction
 from backend.benchmarks.tasks import BenchmarkTask
 
 
+_THINK_TAGS = r"(?:think|thinking|thought|reasoning|analysis)"
+_THINK_BLOCK = re.compile(rf"<\s*{_THINK_TAGS}\s*>.*?<\s*/\s*{_THINK_TAGS}\s*>", re.S | re.I)
+_THINK_CLOSE = re.compile(rf"<\s*/\s*{_THINK_TAGS}\s*>", re.I)
+
+
+def _strip_reasoning(text: str) -> str:
+    cleaned = _THINK_BLOCK.sub("", text)
+    matches = list(_THINK_CLOSE.finditer(cleaned))
+    if matches: cleaned = cleaned[matches[-1].end():]
+    return cleaned.strip()
+
+
 def _strip_code(text: str) -> str:
-    matched = re.search(r"```(?:python)?\s*(.*?)```", text, re.S | re.I)
-    return matched.group(1).strip() if matched else text.strip()
+    matches = list(re.finditer(r"```(?:python|json)?\s*(.*?)```", text, re.S | re.I))
+    return matches[-1].group(1).strip() if matches else text.strip()
+
+
+def _parse_json(text: str) -> Any:
+    candidate = _strip_code(text)
+    try: return json.loads(candidate)
+    except json.JSONDecodeError: pass
+    decoder = json.JSONDecoder(); found = None; position = 0
+    while position < len(candidate):
+        match = re.search(r"[{\[]", candidate[position:])
+        if not match: break
+        start = position + match.start()
+        try:
+            value, end = decoder.raw_decode(candidate[start:])
+            found = value; position = start + end
+        except json.JSONDecodeError: position = start + 1
+    if found is not None: return found
+    raise ValueError("no JSON value found")
 
 
 def _number(text: str) -> str | None:
@@ -25,11 +54,11 @@ def _number(text: str) -> str | None:
     return values[-1] if values else None
 
 
-def _score_instruction(output: str, expected: dict[str, Any]) -> tuple[float, dict[str, Any]]:
+def _instruction_checks(text: str, expected: dict[str, Any]) -> tuple[float, dict[str, Any]]:
     checks: list[bool] = []
     if "json_schema" in expected:
         try:
-            parsed = json.loads(output)
+            parsed = _parse_json(text)
             def valid_schema(value: Any, schema: Any) -> bool:
                 if isinstance(schema, str):
                     if schema == "string": return isinstance(value, str)
@@ -54,29 +83,29 @@ def _score_instruction(output: str, expected: dict[str, Any]) -> tuple[float, di
                 checks.append(valid_schema(parsed, schema))
             else:
                 checks.extend(valid_schema(parsed.get(k), typ) for k, typ in schema.items())
-        except (json.JSONDecodeError, AttributeError): checks.append(False)
-    if "line_count" in expected: checks.append(len([x for x in output.splitlines() if x.strip()]) == expected["line_count"])
-    if expected.get("lowercase"): checks.append(output == output.lower())
-    if "regex" in expected: checks.append(bool(re.fullmatch(expected["regex"], output.strip())))
-    if "contains" in expected: checks.extend(item in output for item in expected["contains"])
-    if "forbid" in expected: checks.extend(item not in output for item in expected["forbid"])
-    if "max_chars" in expected: checks.append(len(output.strip()) <= expected["max_chars"])
-    if "min_chars" in expected: checks.append(len(output.strip()) >= expected["min_chars"])
-    if "max_lines" in expected: checks.append(len([x for x in output.splitlines() if x.strip()]) <= expected["max_lines"])
-    if "exact" in expected: checks.append(output.strip() == expected["exact"])
-    if "exact_lines" in expected: checks.append([x.strip() for x in output.splitlines() if x.strip()] == expected["exact_lines"])
+        except (json.JSONDecodeError, ValueError, AttributeError, TypeError): checks.append(False)
+    if "line_count" in expected: checks.append(len([x for x in text.splitlines() if x.strip()]) == expected["line_count"])
+    if expected.get("lowercase"): checks.append(text == text.lower())
+    if "regex" in expected: checks.append(bool(re.fullmatch(expected["regex"], text.strip())))
+    if "contains" in expected: checks.extend(item in text for item in expected["contains"])
+    if "forbid" in expected: checks.extend(item not in text for item in expected["forbid"])
+    if "max_chars" in expected: checks.append(len(text.strip()) <= expected["max_chars"])
+    if "min_chars" in expected: checks.append(len(text.strip()) >= expected["min_chars"])
+    if "max_lines" in expected: checks.append(len([x for x in text.splitlines() if x.strip()]) <= expected["max_lines"])
+    if "exact" in expected: checks.append(text.strip() == expected["exact"])
+    if "exact_lines" in expected: checks.append([x.strip() for x in text.splitlines() if x.strip()] == expected["exact_lines"])
     if "line_prefixes" in expected:
-        lines = [x for x in output.splitlines() if x.strip()]
+        lines = [x for x in text.splitlines() if x.strip()]
         prefixes = expected["line_prefixes"]
         checks.append(len(lines) == len(prefixes))
         checks.extend(line.startswith(prefix) for line, prefix in zip(lines, prefixes))
-    if "prefix" in expected: checks.extend(x.startswith(expected["prefix"]) for x in output.splitlines() if x.strip())
+    if "prefix" in expected: checks.extend(x.startswith(expected["prefix"]) for x in text.splitlines() if x.strip())
     if "json_keys" in expected:
-        try: checks.extend(key in json.loads(output) for key in expected["json_keys"])
-        except (json.JSONDecodeError, TypeError): checks.append(False)
+        try: checks.extend(key in _parse_json(text) for key in expected["json_keys"])
+        except (json.JSONDecodeError, ValueError, TypeError): checks.append(False)
     if "json_array" in expected:
         try:
-            parsed = json.loads(output); spec = expected["json_array"]
+            parsed = _parse_json(text); spec = expected["json_array"]
             checks.append(isinstance(parsed, list) and len(parsed) == spec["length"])
             for item in parsed:
                 checks.extend(
@@ -85,8 +114,26 @@ def _score_instruction(output: str, expected: dict[str, Any]) -> tuple[float, di
                     isinstance(item.get(k), bool) if typ == "boolean" else False
                     for k, typ in spec["fields"].items()
                 )
-        except (json.JSONDecodeError, TypeError, AttributeError): checks.append(False)
+        except (json.JSONDecodeError, ValueError, TypeError, AttributeError): checks.append(False)
     return (sum(checks) / len(checks) if checks else 0), {"checks": checks}
+
+
+def _answer_tail(text: str, expected: dict[str, Any]) -> str:
+    lines = [x for x in text.splitlines() if x.strip()]
+    if not lines: return ""
+    width = expected.get("line_count") or (len(expected["exact_lines"]) if "exact_lines" in expected else 0) or (len(expected["line_prefixes"]) if "line_prefixes" in expected else 0) or 1
+    return "\n".join(lines[-width:])
+
+
+def _score_instruction(output: str, expected: dict[str, Any]) -> tuple[float, dict[str, Any]]:
+    cleaned = _strip_reasoning(output)
+    value, details = _instruction_checks(cleaned, expected)
+    if value >= 1: return value, details
+    tail = _answer_tail(cleaned, expected)
+    if tail and tail != cleaned:
+        alt_value, alt_details = _instruction_checks(tail, expected)
+        if alt_value > value: return alt_value, {"checks": alt_details["checks"], "answer_tail": True}
+    return value, details
 
 
 def _score_math(output: str, expected: dict[str, Any]) -> tuple[float, dict[str, Any]]:
@@ -98,7 +145,7 @@ def _score_math(output: str, expected: dict[str, Any]) -> tuple[float, dict[str,
 
 
 def _score_code(output: str, expected: dict[str, Any]) -> tuple[float, dict[str, Any]]:
-    code = _strip_code(output)
+    code = _strip_code(_strip_reasoning(output))
     try: ast.parse(code)
     except SyntaxError as exc: return 0, {"kind": "syntax_error", "message": str(exc)}
     # Docker is the default isolation boundary. Refuse host execution for model-generated code.
